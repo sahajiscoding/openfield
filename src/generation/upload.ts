@@ -1,22 +1,12 @@
-import { put } from "@vercel/blob/client";
-
 export async function uploadMedia(file: File): Promise<{ url: string }> {
-  const res = await fetch("/api/blob", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      type: "blob.generate-client-token",
-      payload: { pathname: file.name, clientPayload: null, multipart: false },
-    }),
-  });
-  if (!res.ok) throw new Error("Failed to retrieve the client token");
-  const { clientToken, pathname } = (await res.json()) as {
-    clientToken?: unknown;
-    pathname?: unknown;
-  };
-  if (typeof clientToken !== "string" || typeof pathname !== "string") {
-    throw new Error("Failed to retrieve the client token");
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch("/api/uploads", { method: "POST", body: form });
+  if (!res.ok) {
+    const { error } = (await res.json().catch(() => ({}))) as { error?: unknown };
+    throw new Error(typeof error === "string" && error ? error : "Upload failed — try again.");
   }
-  const blob = await put(pathname, file, { access: "public", token: clientToken });
-  return { url: blob.url };
+  const { url } = (await res.json()) as { url?: unknown };
+  if (typeof url !== "string" || !url) throw new Error("Upload failed — try again.");
+  return { url };
 }
