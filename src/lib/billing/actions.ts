@@ -4,16 +4,18 @@ import { headers } from "next/headers";
 
 import { getPack } from "@/lib/credits/packs";
 import {
-  attachProviderOrder,
-  createPendingOrder,
+  attachProviderOrderSelf,
+  cancelMyOrderSelf,
+  createCheckoutSessionSelf,
   findOrderByTenantRef,
+  getMyOrderSelf,
   getMyOrders,
   getTokenBalance,
   grantTokens,
   mapProviderStatus,
   markOrderPaid,
   setOrderStatus,
-  setSubmittedUtr,
+  submitUtrSelf,
   type TokenOrder,
 } from "@/lib/credits/wallet";
 import { clientIpFromHeaders, enforceRateLimit } from "@/lib/rate-limit";
@@ -46,6 +48,11 @@ export type QrCheckout = {
  * Start a UroPay QR checkout. UroPay is direct-UPI (no hosted page): this
  * generates a QR the customer scans in any UPI app, then pastes the UTR.
  * Amount is sent in paise per docs (₹199 → 19900).
+ *
+ * DB writes ride the SIGNED-IN USER's session through the migration-005
+ * self-service RPCs (auth.uid()-bound) — no direct table rights and no
+ * service-role INSERT involved, so RLS/42501 on uropay_orders cannot break
+ * purchases. Money movement (grant on COMPLETED) stays service-side.
  */
 export async function buyTokenPack(packId: string): Promise<QrCheckout> {
   const user = await requireSessionUser({ verified: true });
@@ -56,12 +63,10 @@ export async function buyTokenPack(packId: string): Promise<QrCheckout> {
   const tenantRef = `of-${Date.now().toString(36)}-${user.id.slice(0, 8)}`;
 
   try {
-    await createPendingOrder({
-      userId: user.id,
+    await createCheckoutSessionSelf({
       packId: pack.id,
       tokens: pack.tokens,
       amount: pack.inr,
-      currency: "INR",
       tenantRef,
     });
 
@@ -76,7 +81,7 @@ export async function buyTokenPack(packId: string): Promise<QrCheckout> {
       transactionNote: `Openfield ${pack.id} ${pack.tokens} tokens`,
       notes: { pack: pack.id, tokens: String(pack.tokens), user: user.id },
     });
-    await attachProviderOrder(tenantRef, order.uroPayOrderId);
+    await attachProviderOrderSelf(tenantRef, order.uroPayOrderId);
     console.info("[billing] QR generated", {
       userId: user.id,
       pack: pack.id,
@@ -91,13 +96,17 @@ export async function buyTokenPack(packId: string): Promise<QrCheckout> {
       amountInRupees: order.amountInRupees,
     };
   } catch (caught) {
-    await setOrderStatus(tenantRef, "cancelled").catch(() => {});
+    // Best-effort cancel of OUR OWN row through the self RPC (never throws
+    // past this point — a failed cancel just leaves a pending row behind).
+    await cancelMyOrderSelf(tenantRef).catch(() => {});
     const message = caught instanceof Error ? caught.message : String(caught);
     if (message.includes("Sign in")) throw caught;
     if (message.includes("Payments are not configured")) throw caught;
-    // UroPay refusals and DB diagnostics are safe to surface (no secrets).
+    // UroPay refusals, migration hints, and DB diagnostics are safe to
+    // surface (no secrets in any of them).
     if (
       message.startsWith("UroPay") ||
+      message.includes("005_billing_hardening") ||
       message.includes("Server misconfigured") ||
       message.includes("Write blocked") ||
       message.includes("Could not start checkout") ||
@@ -118,14 +127,18 @@ function cleanUtr(utr: unknown): string {
   return s;
 }
 
-/** Customer pastes the UTR after paying. Moves the order to UTR_SUBMITTED. */
+/**
+ * Customer pastes the UTR after paying. Moves the order to UTR_SUBMITTED.
+ * The row is read through the self RPC (auth.uid()-filtered); the UTR write
+ * likewise goes through submit_utr, which re-checks ownership server-side.
+ */
 export async function submitUtr(tenantRef: string, utr: unknown): Promise<{ orderStatus: string }> {
   const user = await requireSessionUser({ verified: true });
   const ip = clientIpFromHeaders(await headers());
   enforceRateLimit(`billing:utr:${user.id}:${ip}`, 10, 60_000);
 
   const referenceNumber = cleanUtr(utr);
-  const row = await findOrderByTenantRef(tenantRef);
+  const row = await getMyOrderSelf(tenantRef);
   if (!row || row.user_id !== user.id) throw new Error("Order not found.");
   if (row.status === "paid") return { orderStatus: "COMPLETED" };
   if (!row.uropay_order_id) throw new Error("Order not ready — regenerate the QR.");
@@ -138,11 +151,12 @@ export async function submitUtr(tenantRef: string, utr: unknown): Promise<{ orde
       uroPayOrderId: row.uropay_order_id,
       referenceNumber,
     });
-    await setSubmittedUtr(tenantRef, referenceNumber);
+    await submitUtrSelf(tenantRef, referenceNumber);
     return { orderStatus: updated.orderStatus };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : String(caught);
     if (message.startsWith("UroPay")) throw new Error(message);
+    if (message.includes("005_billing_hardening")) throw new Error(message);
     throw new Error("Could not submit UTR — check the number and try again.");
   }
 }
@@ -152,6 +166,9 @@ export type PollResult = { status: string; credited: boolean };
 /**
  * Poll authoritative provider status. Credits idempotently on COMPLETED
  * (webhook is the primary path; polling covers missed/delayed webhooks).
+ * NOTE: crediting (grant + mark-paid) runs on the service-role client by
+ * design — moving money must stay server-verified. If THIS step 42501s while
+ * checkout/UTR succeed, the service credential (not the schema) is at fault.
  */
 export async function pollOrderStatus(tenantRef: string): Promise<PollResult> {
   const user = await requireSessionUser();
