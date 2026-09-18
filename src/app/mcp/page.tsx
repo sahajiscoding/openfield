@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mcp" },
   title: "MCP — Connect Openfield to Claude, Cursor, and any AI tool",
   description:
-    "Add Openfield to Claude Desktop, Cursor, Windsurf, VS Code, Cline, Claude Code, Codex, Continue, or any MCP client. One endpoint, Bearer auth, 2 tools: openfield_models and openfield_pricing.",
+    "Add Openfield to Claude Desktop, Cursor, Windsurf, VS Code, Cline, Claude Code, Codex, Continue, or any MCP client. One endpoint, Bearer auth, model/pricing discovery, and token-gated generation.",
 };
 
 export default function McpPublicPage() {
