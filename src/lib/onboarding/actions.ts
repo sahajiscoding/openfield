@@ -82,7 +82,7 @@ export async function saveOnboarding(input: {
     },
     { onConflict: "user_id" },
   );
-  if (error) throw new Error("Could not save your answers — try again.");
+  if (error) throw mappableDbError(error.message, "Could not save your answers — try again.");
 }
 
 export async function skipOnboarding(): Promise<void> {
@@ -98,5 +98,17 @@ export async function skipOnboarding(): Promise<void> {
     },
     { onConflict: "user_id" },
   );
-  if (error) throw new Error("Could not skip — try again.");
+  if (error) throw mappableDbError(error.message, "Could not skip — try again.");
+}
+
+/** Turn opaque Postgres failures into actionable, leak-free messages. */
+function mappableDbError(detail: string, fallback: string): Error {
+  console.error("[onboarding] db failed", detail);
+  if (/does not exist/i.test(detail)) {
+    return new Error("Database table missing — run migration 003_onboarding.sql in Supabase SQL Editor, then retry.");
+  }
+  if (/permission denied|policy|rls|row-level/i.test(detail)) {
+    return new Error("Database refused the write — check the service key and table policies.");
+  }
+  return new Error(fallback);
 }

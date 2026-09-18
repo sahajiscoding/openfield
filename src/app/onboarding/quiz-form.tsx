@@ -11,7 +11,33 @@ import {
   type ReferralSource,
   type UseCase,
 } from "@/lib/onboarding/options";
-import { saveOnboarding, skipOnboarding } from "@/lib/onboarding/actions";
+
+async function postOnboarding(body: Record<string, unknown>): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch("/api/onboarding", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new Error("Couldn't reach the server — check your connection and try again.");
+  }
+  let data: { ok?: boolean; error?: unknown } = {};
+  try {
+    data = (await res.json()) as typeof data;
+  } catch {
+    throw new Error("Server returned an unreadable response — try again in a moment.");
+  }
+  if (!res.ok || !data.ok) {
+    const message = typeof data.error === "string" && data.error ? data.error : "";
+    // Never surface redacted RSC internals; they mean "server failed opaquely".
+    if (!message || /minified react error|server components render/i.test(message)) {
+      throw new Error("Couldn't save — try again in a moment. If it persists, the database may be unreachable.");
+    }
+    throw new Error(message);
+  }
+}
 
 const USE_CASE_LABELS: Record<UseCase, string> = {
   "ads-marketing": "Ads & marketing",
@@ -60,7 +86,7 @@ export function QuizForm({ next }: { next: string }) {
     setBusy(true);
     setError(null);
     try {
-      await saveOnboarding({ useCase, referralSource: referral, experience, dob: dob || null });
+      await postOnboarding({ op: "save", useCase, referralSource: referral, experience, dob: dob || null });
       router.push(next);
       router.refresh();
     } catch (caught) {
@@ -71,8 +97,9 @@ export function QuizForm({ next }: { next: string }) {
 
   async function skip() {
     setBusy(true);
+    setError(null);
     try {
-      await skipOnboarding();
+      await postOnboarding({ op: "skip" });
       router.push(next);
       router.refresh();
     } catch (caught) {
