@@ -1,7 +1,6 @@
 "use server";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
+import { permissionDiagnosis, serviceClient, serviceKeyKind } from "@/lib/supabase/admin";
 import {
   EXPERIENCE_LEVELS,
   REFERRAL_SOURCES,
@@ -9,14 +8,12 @@ import {
 } from "./options";
 import { requireSessionUser } from "@/lib/supabase/server";
 
-let admin: SupabaseClient | null = null;
-
-function adminClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !service) throw new Error("Onboarding is not configured.");
-  admin ??= createClient(url, service, { auth: { persistSession: false } });
-  return admin;
+function adminClient() {
+  try {
+    return serviceClient();
+  } catch {
+    throw new Error("Onboarding is not configured.");
+  }
 }
 
 function isOneOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
@@ -103,12 +100,12 @@ export async function skipOnboarding(): Promise<void> {
 
 /** Turn opaque Postgres failures into actionable, leak-free messages. */
 function mappableDbError(detail: string, fallback: string): Error {
-  console.error("[onboarding] db failed", detail);
+  console.error("[onboarding] db failed", { detail, keyKind: serviceKeyKind() });
   if (/does not exist/i.test(detail)) {
     return new Error("Database table missing — run migration 003_onboarding.sql in Supabase SQL Editor, then retry.");
   }
-  if (/permission denied|policy|rls|row-level/i.test(detail)) {
-    return new Error("Database refused the write — check the service key and table policies.");
+  if (/permission denied|policy|rls|row-level|42501/i.test(detail)) {
+    return new Error(permissionDiagnosis());
   }
   return new Error(fallback);
 }

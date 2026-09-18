@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { permissionDiagnosis, serviceClient, serviceKeyKind } from "@/lib/supabase/admin";
 
 /**
  * Wallet access. Service-role ONLY (server actions / route handlers) —
@@ -6,16 +6,22 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * move funnels through the atomic RPCs below. Never import client-side.
  */
 
-let admin: SupabaseClient | null = null;
+function adminClient() {
+  return serviceClient();
+}
 
-function adminClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !service) {
-    throw new Error("Token billing is not configured — set SUPABASE_SERVICE_ROLE_KEY.");
-  }
-  admin ??= createClient(url, service, { auth: { persistSession: false } });
-  return admin;
+/** Permission-shaped failures name the deployed key KIND, never its value. */
+function billingPermissionError(): Error {
+  // Server logs are owner-only: key KIND (not value) is safe to record here.
+  console.error("[billing] permission failure", { keyKind: serviceKeyKind() });
+  return new Error(permissionDiagnosis());
+}
+
+function isPermissionFailure(error: { code?: string; message: string }): boolean {
+  return (
+    error.code === "42501" ||
+    /permission denied|row-level|policy[^a-z]|rls/i.test(error.message)
+  );
 }
 
 export async function getTokenBalance(userId: string): Promise<number> {
@@ -24,7 +30,10 @@ export async function getTokenBalance(userId: string): Promise<number> {
     .select("balance")
     .eq("user_id", userId)
     .maybeSingle();
-  if (error) throw new Error("Could not read token balance.");
+  if (error) {
+    if (isPermissionFailure(error)) throw billingPermissionError();
+    throw new Error("Could not read token balance.");
+  }
   return data?.balance ?? 0;
 }
 
@@ -43,6 +52,7 @@ export async function spendTokens(
   });
   if (error) {
     if (error.message.includes("insufficient")) throw new Error("Insufficient tokens — top up to keep generating.");
+    if (isPermissionFailure(error)) throw billingPermissionError();
     throw new Error("Billing error — try again.");
   }
   return data as number;
@@ -61,7 +71,10 @@ export async function grantTokens(
     p_reason: reason,
     p_ref: ref,
   });
-  if (error) throw new Error("Billing error — contact support with your order id.");
+  if (error) {
+    if (isPermissionFailure(error)) throw billingPermissionError();
+    throw new Error("Billing error — contact support with your order id.");
+  }
   return data as number;
 }
 
