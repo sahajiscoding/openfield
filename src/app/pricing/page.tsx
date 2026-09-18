@@ -6,82 +6,70 @@ import "../landing.css";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
-  title: "Pricing — free studio, pay the models directly",
+  title: "Pricing — BYOK free, Pro keyless",
   description:
-    "Openfield is free and MIT licensed. Bring your own Higgsfield or MuAPI key and pay providers directly — no bundled credits, no markup.",
+    "Two ways to generate on Openfield: BYOK — bring your own key and pay providers directly, free forever. Pro — no key needed, paid models included on our Higgsfield key.",
 };
 
 const TIERS = [
   {
     flag: "Available now",
     hot: false,
-    name: "Open",
+    name: "BYOK",
     price: "$0",
     per: "forever",
-    blurb: "The full studio, self-hosted. Your keys, your bill, your data.",
+    blurb: "Bring your own key. The studio is free; you pay your provider directly per run.",
     feats: [
-      "Higgsfield tab — all 38 models",
-      "MuAPI tab — curated 400+ catalog",
-      "BYOK: id:secret + x-api-key",
-      "Gallery, viewer, batch ×4, undo",
-      "MIT source + self-host",
+      "Full studio: 38 Higgsfield + 400+ MuAPI catalog",
+      "Higgsfield id:secret or MuAPI x-api-key",
+      "Provider bills your key — $0 to us",
+      "httpOnly key storage, revoke anytime",
+      "MIT source + self-hostable",
     ],
-    cta: { label: "Open the studio", href: "/studio", lime: true },
+    cta: { label: "Start with your key", href: "/byok", lime: true },
   },
   {
     flag: "Early access",
     hot: true,
-    name: "Creator",
+    name: "Pro",
     price: "$12",
     per: "/ month",
-    blurb: "Hosted studio for solo storytellers shipping every week.",
+    blurb: "No key needed. Paid models included, running on our Higgsfield API key.",
     feats: [
-      "Everything in Open, hosted",
-      "Supabase login + cloud history",
-      "Lip-sync studio included",
-      "Priority render queue",
+      "Everything in BYOK, keyless",
+      "Paid models unlocked: Seedance 2.5, Kling 3 Pro, Soul Cinema",
+      "Runs on our Higgsfield key — nothing to paste",
+      "Priority render queue + higher limits",
       "Email support",
     ],
     cta: { label: "Join the waitlist", href: "https://github.com/sahajiscoding/openfield", lime: true },
-  },
-  {
-    flag: "Early access",
-    hot: false,
-    name: "Studio",
-    price: "$49",
-    per: "/ month",
-    blurb: "For teams and client work — seats, shared vault, invoices.",
-    feats: [
-      "Everything in Creator",
-      "5 seats included",
-      "Shared team key vault",
-      "Invoice billing",
-      "Priority support",
-    ],
-    cta: { label: "Talk to us", href: "https://github.com/sahajiscoding/openfield", lime: false },
   },
 ];
 
 const FAQS: Array<[string, string]> = [
   [
-    "What do generations actually cost me?",
-    "Whatever your provider charges your key — Openfield adds $0. A Seedance 2.5 run via the Higgsfield API is billed by Higgsfield; a Veo 3 run via MuAPI is billed by MuAPI. Check each run against your provider balance, which the studio surfaces where the API exposes it.",
+    "What's the difference between BYOK and Pro?",
+    "BYOK is free forever: you connect your own Higgsfield or MuAPI key and that provider bills you per run — Openfield takes nothing. Pro is keyless: you pay us a flat monthly price and generate on our Higgsfield API key, with paid models included. Pro is in early access; until launch, all generation runs via BYOK and nothing is charged.",
   ],
   [
-    "Do I need both keys?",
-    "No. One key unlocks its tab: a Higgsfield id:secret powers the 38-model tab (Seedance, Kling, Soul…), a MuAPI key powers the 400+ catalog (Veo, Sora, Flux, lip sync…). Power users keep both and switch per shot.",
+    "Which models are 'paid' models?",
+    "The flagship Higgsfield endpoints — Seedance 2.5 (including face inputs), Kling 3 Pro / 4K, Soul Cinema. On BYOK you pay your provider's per-run rate for these; on Pro they're included in the plan up to fair-use limits.",
   ],
   [
-    "Is my API key safe here?",
+    "Do I need a key on Pro?",
+    "No — that's the point of Pro. Generation runs on our Higgsfield key, so there's nothing to paste, rotate, or top up. You can still connect your own MuAPI key alongside Pro for the 400+ extended catalog (Veo, Sora, lip sync).",
+  ],
+  [
+    "Is my API key safe on BYOK?",
     "Keys live in httpOnly cookies the browser JS can't read, and every provider call runs in a server action — the browser never talks to Higgsfield or MuAPI directly. Remove a key anytime from the studio; it stops working immediately.",
   ],
   [
-    "Can I self-host instead of paying?",
-    "Yes — that's the Open tier. Clone the repo, set the env from .env.example, deploy anywhere Next.js runs. MIT licensed, no phone-home, no feature gates.",
+    "Can I self-host?",
+    "Yes — MIT licensed, no phone-home, no feature gates. Clone the repo, set the env from .env.example, deploy anywhere Next.js runs. Self-hosting follows the BYOK path: connect keys per user, or set server defaults via env.",
   ],
   [
-    "Can I cancel Creator or Studio?",
-    "Anytime, in one click, and you keep the Open tier forever — including everything you generated. Paid plans are early access; nothing is charged until launch.",
+    "Will I be charged for Pro today?",
+    "No. Pro is early access — the waitlist collects interest and nothing is charged until launch. BYOK stays free forever regardless.",
   ],
 ];
 
@@ -107,10 +95,10 @@ export default function PricingPage() {
       <main>
         <section className="of-wrap of-section" aria-labelledby="pricing-h" style={{ paddingTop: 72 }}>
           <Reveal><p className="of-kicker">Pricing</p></Reveal>
-          <Reveal><h1 id="pricing-h" className="of-h2" style={{ fontSize: "clamp(38px,5vw,64px)" }}>Free studio. Pay the models, <span style={{ color: "var(--of-lime)" }}>not us.</span></h1></Reveal>
-          <Reveal><p className="of-lede">Openfield charges $0 for generation. You bring a provider key and pay that provider directly — no bundled credits, no markup, no subscription required to create.</p></Reveal>
+          <Reveal><h1 id="pricing-h" className="of-h2" style={{ fontSize: "clamp(38px,5vw,64px)" }}>Your key, or <span style={{ color: "var(--of-lime)" }}>ours.</span></h1></Reveal>
+          <Reveal><p className="of-lede">BYOK is free forever — bring a provider key and pay that provider directly. Pro is keyless — a flat monthly price with paid models included on our Higgsfield API key.</p></Reveal>
 
-          <div className="of-grid-3">
+          <div className="of-split">
             {TIERS.map((t, i) => (
               <Reveal key={t.name} as="article" className={`of-card of-tier${t.hot ? " of-tier--hot" : ""}`} delay={i * 90}>
                 <span className={`of-flag${t.hot ? " of-flag--lime" : ""}`}>{t.flag}</span>
@@ -130,19 +118,19 @@ export default function PricingPage() {
 
         <section className="of-wrap of-section" aria-labelledby="compare-h">
           <Reveal><p className="of-kicker">Compare</p></Reveal>
-          <Reveal><h2 id="compare-h" className="of-h2">Openfield vs. closed subscriptions.</h2></Reveal>
-          <Reveal><p className="of-lede">Typical closed AI-video platforms charge monthly subscriptions for bundled credits inside a locked ecosystem. Openfield inverts it: the studio is free, the models bill you directly.</p></Reveal>
+          <Reveal><h2 id="compare-h" className="of-h2">BYOK vs. Pro.</h2></Reveal>
+          <Reveal><p className="of-lede">Same studio, same gallery — the plans differ only in whose key pays for the pixels.</p></Reveal>
           <Reveal>
-            <div className="of-table" role="region" aria-label="Pricing comparison" tabIndex={0}>
+            <div className="of-table" role="region" aria-label="Plan comparison" tabIndex={0}>
               <table>
-                <thead><tr><th scope="col"> </th><th scope="col">Openfield Open</th><th scope="col">Typical closed platform</th></tr></thead>
+                <thead><tr><th scope="col"> </th><th scope="col">BYOK · $0</th><th scope="col">Pro · $12/mo</th></tr></thead>
                 <tbody>
-                  <tr><td><strong>Studio license</strong></td><td><span className="of-pill of-pill--lime">$0 · MIT</span></td><td>≈ $8–120/mo per tier (check pricing pages)</td></tr>
-                  <tr><td><strong>Generation billing</strong></td><td>Pay provider directly on your key</td><td>Bundled credits inside the subscription</td></tr>
-                  <tr><td><strong>Your key</strong></td><td>Yours — portable, revocable</td><td>Locked to the platform</td></tr>
-                  <tr><td><strong>Models</strong></td><td>38 Higgsfield + 400+ MuAPI in one gallery</td><td>Proprietary set only</td></tr>
-                  <tr><td><strong>Self-host</strong></td><td><span className="of-pill of-pill--lime">Yes</span></td><td>No</td></tr>
-                  <tr><td><strong>Source code</strong></td><td><span className="of-pill of-pill--lime">MIT</span></td><td>Closed</td></tr>
+                  <tr><td><strong>Key needed</strong></td><td>Yours — <code>id:secret</code> or <code>x-api-key</code></td><td><span className="of-pill of-pill--lime">None — ours</span></td></tr>
+                  <tr><td><strong>Paid models</strong><br />Seedance 2.5, Kling 3 Pro, Soul Cinema</td><td>At your provider&apos;s per-run rate</td><td><span className="of-pill of-pill--lime">Included</span> (fair use)</td></tr>
+                  <tr><td><strong>Generation billing</strong></td><td>Provider bills your key directly</td><td>Flat monthly, on our Higgsfield key</td></tr>
+                  <tr><td><strong>Studio + gallery</strong></td><td>Full — 38 + 400+ models, batch ×4, viewer</td><td>Full — same studio</td></tr>
+                  <tr><td><strong>Queue</strong></td><td>Standard</td><td>Priority + higher limits</td></tr>
+                  <tr><td><strong>Support</strong></td><td>Community (GitHub)</td><td>Email</td></tr>
                 </tbody>
               </table>
             </div>
@@ -168,8 +156,8 @@ export default function PricingPage() {
           <div className="of-cta">
             <div>
               <p className="of-kicker">Start free</p>
-              <h2 id="cta-h" className="of-h2">Your first run costs whatever the model costs. Nothing else.</h2>
-              <p>Sign in, paste a key when you have one, generate. Read <Link href="/byok">how BYOK works →</Link></p>
+              <h2 id="cta-h" className="of-h2">Bring a key today. Go keyless when Pro lands.</h2>
+              <p>BYOK works right now — no card, no waitlist. Read <Link href="/byok">how keys work →</Link></p>
               <div className="of-cta-row">
                 <Link href="/studio" className="of-btn of-btn--lime">Open the studio →</Link>
                 <Link href="/byok" className="of-btn">How keys work</Link>
