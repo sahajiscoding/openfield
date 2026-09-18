@@ -90,7 +90,7 @@ export default async function ByokPage() {
         <section className="of-wrap of-section" aria-labelledby="byok-h" style={{ paddingTop: 72 }}>
           <Reveal><p className="of-kicker">BYOK · your keys, your bill</p></Reveal>
           <Reveal><h1 id="byok-h" className="of-h2" style={{ fontSize: "clamp(38px,5vw,64px)" }}>Bring your own key. <span style={{ color: "var(--of-lime)" }}>Keep your margin.</span></h1></Reveal>
-          <Reveal><p className="of-lede">Openfield never sells you credits. Connect the providers you already pay, generate at their cost, revoke anytime. Status below reflects this browser right now.</p></Reveal>
+          <Reveal><p className="of-lede">Openfield never sells you credits. Connect the providers you already pay, generate at their cost, revoke anytime. Status below reflects this browser right now. Prefer keyless? <Link href="/pricing">Pro runs on our Higgsfield key →</Link></p></Reveal>
 
           <div className="of-split">
             <Reveal as="article" className="of-card">
