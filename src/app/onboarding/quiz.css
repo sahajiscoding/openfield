@@ -1,0 +1,123 @@
+.of-quiz-card {
+  width: min(560px, 100%);
+}
+
+.of-quiz-steps {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.of-quiz-steps li {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--of-smoke);
+  min-width: 0;
+}
+
+.of-quiz-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--of-line);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.of-quiz-steps li[data-done="true"] .of-quiz-dot {
+  background: var(--of-lime);
+  border-color: var(--of-lime);
+  color: var(--of-lime-ink);
+}
+
+.of-quiz-steps li[aria-current="step"] {
+  color: var(--of-bone);
+}
+
+.of-quiz-steps li[aria-current="step"] .of-quiz-dot {
+  border-color: var(--of-lime);
+  color: var(--of-lime);
+}
+
+.of-quiz-step-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.of-quiz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.of-quiz-grid--one {
+  grid-template-columns: 1fr;
+}
+
+.of-quiz-opt {
+  appearance: none;
+  background: #08090a;
+  border: 1px solid var(--of-line);
+  border-radius: 12px;
+  color: var(--of-bone);
+  font: 600 14px/1.4 var(--font-body);
+  padding: 15px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.of-quiz-opt:hover {
+  border-color: rgba(212, 249, 33, 0.5);
+  transform: translateY(-1px);
+}
+
+.of-quiz-opt[aria-pressed="true"] {
+  border-color: var(--of-lime);
+  background: rgba(212, 249, 33, 0.07);
+}
+
+.of-quiz-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.of-quiz-skip {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--of-smoke);
+  font: 500 13.5px/1 var(--font-body);
+  cursor: pointer;
+  margin-left: auto;
+  padding: 8px 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.of-quiz-skip:hover {
+  color: var(--of-bone);
+}
+
+@media (max-width: 560px) {
+  .of-quiz-step-label {
+    display: none;
+  }
+
+  .of-quiz-grid {
+    grid-template-columns: 1fr;
+  }
+}
