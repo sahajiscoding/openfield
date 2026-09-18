@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { MODELS, getModel } from "@/generation/catalog";
+import { useActive } from "@/generation/stores/active";
+import { useImagePrompt, useVideoPrompt } from "@/generation/stores/prompt";
+import { MUAPI_MODELS } from "@/lib/muapi/catalog";
 import { OpenHiggsfieldApp } from "@/openhiggsfield/openhiggsfield-app";
 import { createClient } from "@/lib/supabase/client";
 import { clearMuapiKey, saveMuapiKey } from "@/lib/muapi/actions";
@@ -18,6 +22,46 @@ export function StudioShell({ email }: { email: string | undefined }) {
   const [muapiKey, setMuapiKey] = useState("");
   const [keyOpen, setKeyOpen] = useState(false);
   const [keyMsg, setKeyMsg] = useState<string | null>(null);
+  const [muapiInitialModel, setMuapiInitialModel] = useState<string | undefined>(undefined);
+  const [muapiInitialPrompt, setMuapiInitialPrompt] = useState<string | undefined>(undefined);
+  const queryApplied = useRef(false);
+
+  /* Deep-link prefill from the landing composer (?provider=&model=&prompt=).
+     Runs once on mount: validates the model against the real catalogs, loads
+     the provider tab + prompt, then drops the query so refreshes don't replay. */
+  useEffect(() => {
+    if (queryApplied.current || typeof window === "undefined") return;
+    queryApplied.current = true;
+    const q = new URLSearchParams(window.location.search);
+    const prompt = (q.get("prompt") ?? "").slice(0, 2000).trim();
+    const model = q.get("model") ?? "";
+    if (!prompt && !model) return;
+
+    if (q.get("provider") === "muapi" || MUAPI_MODELS.some((m) => m.id === model)) {
+      setProvider("muapi");
+      if (model && MUAPI_MODELS.some((m) => m.id === model)) setMuapiInitialModel(model);
+      if (prompt) setMuapiInitialPrompt(prompt);
+    } else {
+      if (model && MODELS.some((entry) => entry.id === model)) {
+        try {
+          useActive.getState().setModel(model);
+        } catch {
+          // unknown model — keep the persisted one
+        }
+      }
+      if (prompt) {
+        const surface = (() => {
+          try {
+            return model ? getModel(model).surface : useActive.getState().surface;
+          } catch {
+            return useActive.getState().surface;
+          }
+        })();
+        (surface === "image" ? useImagePrompt : useVideoPrompt).getState().setText(prompt);
+      }
+    }
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   async function signOut() {
     const supabase = createClient();
@@ -88,7 +132,11 @@ export function StudioShell({ email }: { email: string | undefined }) {
       {provider === "higgsfield" ? (
         <OpenHiggsfieldApp />
       ) : (
-        <MuapiStudio onNeedsKey={() => setKeyOpen(true)} />
+        <MuapiStudio
+          onNeedsKey={() => setKeyOpen(true)}
+          initialModelId={muapiInitialModel}
+          initialPrompt={muapiInitialPrompt}
+        />
       )}
     </div>
   );

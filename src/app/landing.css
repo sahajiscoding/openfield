@@ -222,12 +222,19 @@
 }
 
 .of-mock-tab {
-  font-size: 12.5px;
-  font-weight: 600;
+  font: 600 12.5px/1 var(--font-body);
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--of-line);
   color: var(--of-smoke);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.of-mock-tab:hover {
+  color: var(--of-bone);
+  border-color: rgba(237, 234, 224, 0.3);
 }
 
 .of-mock-tab--on {
@@ -301,6 +308,46 @@
 .of-generate:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 34px rgba(212, 249, 33, 0.35);
+}
+
+.of-generate:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.of-mock-prompt:focus-within {
+  border-color: rgba(212, 249, 33, 0.45);
+}
+
+.of-mock-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--of-bone);
+  font: 400 15px/1.6 var(--font-body);
+  resize: none;
+  min-height: 72px;
+}
+
+.of-mock-input:focus {
+  outline: none;
+}
+
+.of-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ── Marquee ────────────────────────────────────────────── */
