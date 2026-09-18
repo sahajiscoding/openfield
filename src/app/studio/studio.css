@@ -232,3 +232,17 @@
     height: 96px;
   }
 }
+
+.of-mcp-page {
+  min-height: 100dvh; padding: 56px clamp(20px, 6vw, 96px); background: #08090a; color: var(--of-bone, #edeae0); font-family: var(--font-body); max-width: 980px;
+}
+.of-mcp-back { color: var(--of-smoke, #9aa08c); text-decoration: none; }
+.of-mcp-kicker { margin-top: 64px; color: var(--of-lime, #d4f921); text-transform: uppercase; letter-spacing: .14em; font-size: 12px; font-weight: 700; }
+.of-mcp-page h1 { max-width: 720px; font-family: var(--font-display); font-size: clamp(38px, 7vw, 72px); line-height: 1; margin: 14px 0 20px; }
+.of-mcp-lede { max-width: 680px; color: var(--of-smoke, #9aa08c); font-size: 18px; line-height: 1.6; }
+.of-mcp-card { margin-top: 22px; padding: 24px; border: 1px solid var(--of-line, #1d2124); border-radius: 18px; background: rgba(19,22,24,.72); }
+.of-mcp-card h2 { margin: 0 0 14px; font-size: 18px; }
+.of-mcp-card code, .of-mcp-card pre { color: var(--of-lime, #d4f921); font-family: ui-monospace, monospace; font-size: 13px; overflow-x: auto; }
+.of-mcp-card pre { padding: 16px; background: #08090a; border-radius: 10px; white-space: pre-wrap; }
+.of-mcp-card p, .of-mcp-card li { color: var(--of-smoke, #9aa08c); line-height: 1.6; }
+.of-mcp-card li { margin: 8px 0; }

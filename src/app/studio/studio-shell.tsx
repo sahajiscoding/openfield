@@ -79,6 +79,9 @@ export function StudioShell({ email, balance }: { email: string | undefined; bal
         </Link>
         <div className="of-studio-user">
           <span title={email ?? ""}>{email ?? "Signed in"}</span>
+          <Link href="/studio/mcp" style={{ color: "var(--of-lime,#d4f921)", fontSize: 13 }}>
+            MCP
+          </Link>
           <Link href="/studio/billing" style={{ color: "var(--of-smoke,#9aa08c)", fontSize: 13 }}>
             Billing
           </Link>

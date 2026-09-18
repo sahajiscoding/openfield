@@ -15,7 +15,7 @@ import { DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, resolveDeviceId } from "./generat
  * it was one of the hops stacked in front of `/studio`.
  *
  * So the check runs only where it changes the outcome:
- *   - gated routes (`/studio/**`, `/billing/**`) — the gate itself;
+ *   - billing routes (`/billing/**`) — the gate itself;
  *   - `/login` — so a signed-in visitor is forwarded into the studio instead
  *     of being shown a dead form.
  *
@@ -30,7 +30,12 @@ import { DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, resolveDeviceId } from "./generat
  */
 
 /** Route prefixes that require a signed-in, non-expired session. */
-const GATED_PREFIXES = ["/studio", "/billing"] as const;
+// Studio performs its own server-side auth check so the page can reuse the
+// resolved user for its required data reads. Keeping a second network auth
+// check in middleware made every Studio navigation pay for two sequential
+// Supabase auth requests. Billing remains middleware-gated because its nested
+// routes have separate server components.
+const GATED_PREFIXES = ["/billing"] as const;
 
 function isGated(path: string): boolean {
   return GATED_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));

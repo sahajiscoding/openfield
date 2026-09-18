@@ -535,7 +535,9 @@
   /* Top padding clears the floating bar; the mask dissolves runs into the
      ground under it instead of cutting them against the chrome. */
   --ohf-fade: 62px;
-  padding: 72px 20px calc(var(--ohf-dock-h, 138px) + 8px);
+  /* The topbar is 46px high; keep only a small intentional clearance rather
+     than pushing the first-use surface into a large empty band. */
+  padding: 56px 20px calc(var(--ohf-dock-h, 138px) + 8px);
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
@@ -3704,8 +3706,8 @@ a.ohf-btn-solid {
    rail — prompt, model, settings, Generate — above the fold as one piece. */
 @media (max-height: 800px) {
   .ohf-gallery {
-    --ohf-fade: 56px;
-    padding-top: 64px;
+    --ohf-fade: 48px;
+    padding-top: 54px;
   }
   .ohf-dock {
     padding-top: 8px;
