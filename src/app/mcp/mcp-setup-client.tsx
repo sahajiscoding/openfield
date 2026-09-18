@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useMemo, useState } from "react";
 
 type ToolId =
   | "cursor"
@@ -22,14 +21,9 @@ type ToolConfig = {
   icon: string;
   filePath: string[];
   oauthSteps: string[];
-  manualSteps: string[];
   getOAuthConfig: (endpoint: string) => string;
-  getManualConfig: (endpoint: string, tokenPlaceholder: string) => string;
-  cliCommand?: (endpoint: string, tokenPlaceholder: string) => string;
   oauthCliCommand?: (endpoint: string) => string;
 };
-
-const TOKEN_PLACEHOLDER = "YOUR_SUPABASE_ACCESS_TOKEN";
 
 function getConfigs(_endpoint: string): ToolConfig[] {
   return [
@@ -47,29 +41,12 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "Sign in and click Allow access",
         "Cursor redirects back, shows green connected + 3 tools",
       ],
-      manualSteps: [
-        "Create .cursor/mcp.json, paste manual config with your token",
-        "Reload Window, verify 3 tools",
-      ],
       getOAuthConfig: (ep) =>
         JSON.stringify(
           {
             mcpServers: {
               openfield: {
                 url: ep,
-              },
-            },
-          },
-          null,
-          2
-        ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            mcpServers: {
-              openfield: {
-                url: ep,
-                headers: { Authorization: `Bearer ${token}` },
               },
             },
           },
@@ -93,12 +70,7 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "Add server with URL below — no token needed",
         "Claude will open browser to Openfield for auth",
         "Sign in → Allow → back to Claude, 3 tools appear",
-        "If OAuth not supported, use manual mcp-remote config below",
-      ],
-      manualSteps: [
-        "Install: npm i -g mcp-remote",
-        "Add manual config with token",
-        "Quit Claude from tray, reopen, check 🔌 icon",
+        "OAuth is required — add the server URL and authenticate in the browser",
       ],
       getOAuthConfig: (ep) =>
         JSON.stringify(
@@ -106,19 +78,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
             mcpServers: {
               openfield: {
                 url: ep,
-              },
-            },
-          },
-          null,
-          2
-        ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            mcpServers: {
-              openfield: {
-                command: "npx",
-                args: ["-y", "mcp-remote", ep, "--header", `Authorization: Bearer ${token}`],
               },
             },
           },
@@ -139,26 +98,12 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "Browser opens → sign in → Allow",
         "Back to Windsurf, connected",
       ],
-      manualSteps: ["Paste manual config with token, restart Windsurf"],
       getOAuthConfig: (ep) =>
         JSON.stringify(
           {
             mcpServers: {
               openfield: {
                 serverUrl: ep,
-              },
-            },
-          },
-          null,
-          2
-        ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            mcpServers: {
-              openfield: {
-                serverUrl: ep,
-                headers: { Authorization: `Bearer ${token}` },
               },
             },
           },
@@ -179,7 +124,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "VS Code will prompt to authenticate — browser opens",
         "Sign in → Allow → back to VS Code, Show Servers → openfield",
       ],
-      manualSteps: ["Use manual config with Bearer header if OAuth not available"],
       getOAuthConfig: (ep) =>
         JSON.stringify(
           {
@@ -187,20 +131,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
               openfield: {
                 type: "http",
                 url: ep,
-              },
-            },
-          },
-          null,
-          2
-        ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            servers: {
-              openfield: {
-                type: "http",
-                url: ep,
-                headers: { Authorization: `Bearer ${token}` },
               },
             },
           },
@@ -220,28 +150,12 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "Cline opens browser for auth",
         "Sign in → Allow → Cline shows 3 tools",
       ],
-      manualSteps: ["Use mcp-remote with Bearer token if OAuth fails"],
       getOAuthConfig: (ep) =>
         JSON.stringify(
           {
             mcpServers: {
               openfield: {
                 url: ep,
-                disabled: false,
-                autoApprove: ["openfield_models", "openfield_pricing"],
-              },
-            },
-          },
-          null,
-          2
-        ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            mcpServers: {
-              openfield: {
-                command: "npx",
-                args: ["-y", "mcp-remote", ep, "--header", `Authorization: Bearer ${token}`],
                 disabled: false,
                 autoApprove: ["openfield_models", "openfield_pricing"],
               },
@@ -263,10 +177,7 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "Browser opens → sign in → Allow",
         "Claude Code stores token, verify with /mcp",
       ],
-      manualSteps: ["Use manual token command if needed"],
       getOAuthConfig: () => `# OAuth — no file, use CLI`,
-      getManualConfig: () => `# Manual — use token`,
-      cliCommand: (ep, token) => `claude mcp add --transport http openfield ${ep} --header "Authorization: Bearer ${token}"`,
       oauthCliCommand: (ep) => `claude mcp add --transport http openfield ${ep}`,
     },
     {
@@ -277,7 +188,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
       icon: "◍",
       filePath: ["~/.codex/config.toml"],
       oauthSteps: ["Add URL only, Codex will handle OAuth via browser"],
-      manualSteps: ["Use mcp-remote with token"],
       getOAuthConfig: (ep) =>
         JSON.stringify(
           {
@@ -290,20 +200,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
           null,
           2
         ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            mcpServers: {
-              openfield: {
-                url: ep,
-                headers: { Authorization: `Bearer ${token}` },
-              },
-            },
-          },
-          null,
-          2
-        ),
-      cliCommand: (ep, token) => `npx -y mcp-remote ${ep} --header "Authorization: Bearer ${token}"`,
       oauthCliCommand: (ep) => `npx -y mcp-remote ${ep}`,
     },
     {
@@ -314,7 +210,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
       icon: "↗",
       filePath: ["~/.continue/config.json"],
       oauthSteps: ["Add server with URL only, Continue will open browser for auth"],
-      manualSteps: ["Add Bearer header if OAuth not supported"],
       getOAuthConfig: (ep) =>
         JSON.stringify(
           {
@@ -322,24 +217,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
               modelContextProtocolServers: [
                 {
                   transport: { type: "http", url: ep },
-                },
-              ],
-            },
-          },
-          null,
-          2
-        ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            experimental: {
-              modelContextProtocolServers: [
-                {
-                  transport: {
-                    type: "http",
-                    url: ep,
-                    headers: { Authorization: `Bearer ${token}` },
-                  },
                 },
               ],
             },
@@ -360,7 +237,6 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "Client should auto-discover OAuth via 401 + resource_metadata",
         "Browser opens → sign in → Allow → connected",
       ],
-      manualSteps: ["Add Authorization Bearer header with Supabase token"],
       getOAuthConfig: (ep) =>
         JSON.stringify(
           {
@@ -374,53 +250,16 @@ function getConfigs(_endpoint: string): ToolConfig[] {
           null,
           2
         ),
-      getManualConfig: (ep, token) =>
-        JSON.stringify(
-          {
-            mcpServers: {
-              openfield: {
-                url: ep,
-                headers: { Authorization: `Bearer ${token}` },
-                description: "Openfield — 38 models + pricing",
-              },
-            },
-          },
-          null,
-          2
-        ),
     },
   ];
 }
 
 export function McpSetupClient({ endpoint }: { endpoint: string }) {
   const [selected, setSelected] = useState<ToolId>("cursor");
-  const [authMethod, setAuthMethod] = useState<"oauth" | "manual">("oauth");
-  const [token, setToken] = useState("");
-  const [tokenStatus, setTokenStatus] = useState<"idle" | "loading" | "found" | "notfound">("idle");
   const [copied, setCopied] = useState<string | null>(null);
 
   const configs = useMemo(() => getConfigs(endpoint), [endpoint]);
   const active = useMemo(() => configs.find((c) => c.id === selected)!, [configs, selected]);
-
-  useEffect(() => {
-    async function fetchToken() {
-      setTokenStatus("loading");
-      try {
-        const supabase = createClient();
-        const { data } = await supabase.auth.getSession();
-        const t = data.session?.access_token;
-        if (t) {
-          setToken(t);
-          setTokenStatus("found");
-        } else {
-          setTokenStatus("notfound");
-        }
-      } catch {
-        setTokenStatus("notfound");
-      }
-    }
-    void fetchToken();
-  }, []);
 
   async function copy(text: string, key: string) {
     try {
@@ -439,11 +278,8 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
     }
   }
 
-  const displayToken = token || TOKEN_PLACEHOLDER;
-  const oauthConfig = active.getOAuthConfig(endpoint);
-  const manualConfig = active.getManualConfig(endpoint, displayToken);
-  const configText = authMethod === "oauth" ? oauthConfig : manualConfig;
-  const cliText = authMethod === "oauth" ? active.oauthCliCommand?.(endpoint) : active.cliCommand?.(endpoint, displayToken);
+  const configText = active.getOAuthConfig(endpoint);
+  const cliText = active.oauthCliCommand?.(endpoint);
 
   return (
     <div className="of-mcp-v2">
@@ -455,7 +291,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
             <h3>One-click connect — no token copy needed</h3>
             <p>
               Add MCP server URL, click <b>Authenticate</b>, browser opens to Openfield, sign in, Allow, and you&apos;re
-              connected. Works like Slack, Notion, Linear MCP. Manual token still works as fallback.
+              connected. Your client stores the OAuth credentials securely.
             </p>
           </div>
           <div className="of-mcp-v2-hero-steps">
@@ -480,7 +316,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
         <div className="of-card of-mcp-v2-card">
           <div className="of-mcp-v2-card-head">
             <span className="n">ENDPOINT</span>
-            <span className="of-pill of-pill--lime">OAuth + Bearer</span>
+            <span className="of-pill of-pill--lime">OAuth 2.0</span>
           </div>
           <h3>MCP Server URL</h3>
           <div className="of-mcp-v2-code-row">
@@ -505,66 +341,25 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
           <div className="of-mcp-v2-card-head">
             <span className="n">AUTHENTICATION</span>
             <span className="of-flag of-flag--lime" style={{ fontSize: 10 }}>
-              {authMethod === "oauth" ? "OAuth recommended" : tokenStatus === "found" ? "Token found" : "Manual fallback"}
+              OAuth only
             </span>
           </div>
-          <h3>{authMethod === "oauth" ? "OAuth — browser flow" : "Manual — Supabase token"}</h3>
+          <h3>OAuth — browser flow</h3>
 
-          <div className="of-mcp-v2-auth-toggle">
-            <button className={authMethod === "oauth" ? "on" : ""} onClick={() => setAuthMethod("oauth")}>
-              OAuth (1-click)
-            </button>
-            <button className={authMethod === "manual" ? "on" : ""} onClick={() => setAuthMethod("manual")}>
-              Manual token
-            </button>
+          <p>
+            No token copy. Your AI tool opens <code>{endpoint.replace("/api/mcp", "")}/login</code>, you sign in,
+            click Allow, OAuth credentials are issued automatically and stored by the client. Works in Cursor,
+            Claude Desktop, VS Code, Windsurf, etc.
+          </p>
+          <div className="of-mcp-v2-oauth-visual">
+            <span>Tool</span>
+            <i>→</i>
+            <span>401 + resource_metadata</span>
+            <i>→</i>
+            <span>Browser → Openfield → Allow</span>
+            <i>→</i>
+            <span>OAuth → Connected</span>
           </div>
-
-          {authMethod === "oauth" ? (
-            <>
-              <p>
-                No token copy. Your AI tool opens <code>{endpoint.replace("/api/mcp", "")}/login</code>, you sign in,
-                click Allow, token is issued automatically and stored by the client. Works in Cursor, Claude Desktop,
-                VS Code, Windsurf, etc.
-              </p>
-              <div className="of-mcp-v2-oauth-visual">
-                <span>Tool</span>
-                <i>→</i>
-                <span>401 + resource_metadata</span>
-                <i>→</i>
-                <span>Browser → Openfield → Allow</span>
-                <i>→</i>
-                <span>Token → Connected</span>
-              </div>
-            </>
-          ) : (
-            <>
-              {tokenStatus === "loading" && <p>Fetching your session…</p>}
-              {tokenStatus === "found" && (
-                <>
-                  <p>Auto-detected Supabase token. Use only if OAuth not supported by your client.</p>
-                  <div className="of-mcp-v2-code-row">
-                    <code style={{ fontSize: 12 }}>
-                      {token.slice(0, 20)}••••••••••••{token.slice(-8)}
-                    </code>
-                    <button className="of-btn of-btn--lime" style={{ padding: "8px 14px", fontSize: 12 }} onClick={() => copy(token, "tok")}>
-                      {copied === "tok" ? "Copied!" : "Copy token"}
-                    </button>
-                  </div>
-                  <p className="of-mcp-v2-warn">⚠️ Keep private. Rotates on sign-out/in.</p>
-                </>
-              )}
-              {tokenStatus === "notfound" && (
-                <>
-                  <p>No active token. Sign in first, or use OAuth.</p>
-                  <div style={{ marginTop: 12 }}>
-                    <a href="/login?next=/mcp" className="of-btn of-btn--lime">
-                      Sign in →
-                    </a>
-                  </div>
-                </>
-              )}
-            </>
-          )}
         </div>
       </div>
 
@@ -574,7 +369,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
           <div>
             <span className="n">STEP 1</span>
             <h3>Choose your AI tool</h3>
-            <p>Pick your client — OAuth is default, switch to Manual if your client doesn&apos;t support OAuth yet.</p>
+            <p>Pick your client — Openfield MCP uses OAuth for sign-in and connection.</p>
           </div>
         </div>
 
@@ -611,9 +406,9 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
             </div>
 
             <div className="of-mcp-v2-block">
-              <h5>{authMethod === "oauth" ? "OAuth steps (recommended)" : "Manual steps (fallback)"}</h5>
+              <h5>OAuth steps</h5>
               <ol>
-                {(authMethod === "oauth" ? active.oauthSteps : active.manualSteps).map((s, i) => (
+                {active.oauthSteps.map((s, i) => (
                   <li key={i}>
                     <span>{i + 1}</span>
                     <p>{s}</p>
@@ -626,7 +421,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
           <div className="of-mcp-v2-detail-right">
             <div className="of-mcp-v2-code-card">
               <div className="of-mcp-v2-code-head">
-                <span>{authMethod === "oauth" ? "OAuth config — URL only" : "Manual config — with token"}</span>
+                <span>OAuth config — URL only</span>
                 <button className="of-btn" style={{ padding: "6px 12px", fontSize: 11 }} onClick={() => copy(configText, "cfg")}>
                   {copied === "cfg" ? "Copied!" : "Copy JSON"}
                 </button>
@@ -637,7 +432,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
             {cliText && (
               <div className="of-mcp-v2-code-card" style={{ marginTop: 14 }}>
                 <div className="of-mcp-v2-code-head">
-                  <span>{authMethod === "oauth" ? "OAuth CLI" : "Manual CLI"}</span>
+                  <span>OAuth CLI</span>
                   <button className="of-btn" style={{ padding: "6px 12px", fontSize: 11 }} onClick={() => copy(cliText, "cli")}>
                     {copied === "cli" ? "Copied!" : "Copy"}
                   </button>
@@ -647,10 +442,8 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
             )}
 
             <div className="of-mcp-v2-tip">
-              <b>{authMethod === "oauth" ? "OAuth" : "Manual"} tip:</b>{" "}
-              {authMethod === "oauth"
-                ? "Just URL — no token. Client will open browser automatically on 401. If your client doesn't support OAuth yet, switch to Manual."
-                : `Replace ${TOKEN_PLACEHOLDER} with token above. If you copied token, it's already filled.`}
+              <b>OAuth tip:</b>{" "}
+              Just URL — no token copy. Your client will open the browser automatically when authentication is required.
             </div>
           </div>
         </div>
@@ -719,9 +512,6 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
               <b>401 after OAuth?</b> Token expired (24h). Re-authenticate in client, or clear MCP cache and re-add server.
             </li>
             <li>
-              <b>Manual 401?</b> Token expired or wrong. Copy fresh token, ensure <code>Bearer </code> prefix.
-            </li>
-            <li>
               <b>Test OAuth discovery:</b>
               <pre>{`curl ${endpoint}/.well-known/oauth-protected-resource
 curl ${endpoint}/.well-known/oauth-authorization-server`}</pre>
@@ -739,7 +529,7 @@ curl ${endpoint}/.well-known/oauth-authorization-server`}</pre>
             <span>OAuth 2.0</span>
             <span>PKCE S256</span>
             <span>Per-user auth</span>
-            <span>Read-only</span>
+            <span>Token-gated</span>
           </div>
         </div>
       </div>
