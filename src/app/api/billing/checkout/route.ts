@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { buyTokenPack } from "@/lib/billing/actions";
 
 /**
- * Plain-JSON sibling to the buyTokenPack server action. Same logic, but a
- * fetch transport: checkout failures arrive as readable { error } strings
- * instead of redacted RSC errors.
+ * QR checkout: returns { qrCode, upiString, uroPayOrderId, tenantRef }.
+ * The customer scans the QR in any UPI app, then submits the UTR via
+ * /api/billing/submit-utr. Failures arrive as readable { error } strings.
  */
 export async function POST(request: Request): Promise<NextResponse> {
   let packId: unknown;
@@ -19,14 +19,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const { openUrl } = await buyTokenPack(packId);
-    return NextResponse.json({ ok: true, openUrl });
+    const qr = await buyTokenPack(packId);
+    return NextResponse.json({ ok: true, ...qr });
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : String(caught);
     if (/minified react error|server components render/i.test(message)) {
       return NextResponse.json({ error: "Checkout failed — try again in a moment." }, { status: 500 });
     }
-    if (message.includes("Sign in")) {
+    if (message.includes("Sign in") || message.includes("Verify your email")) {
       return NextResponse.json({ error: message, code: "auth" }, { status: 401 });
     }
     const status = message.includes("not configured") ? 503 : 500;

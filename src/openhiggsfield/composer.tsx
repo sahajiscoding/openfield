@@ -55,6 +55,7 @@ export function Composer({
   notice,
   selection,
   selecting,
+  outOfTokens,
   onError,
   onGenerate,
 }: {
@@ -73,6 +74,9 @@ export function Composer({
      always mounted so it can animate away, and states its own presence. */
   selection: ReactNode;
   selecting: boolean;
+  /* Zero (or negative) token balance: the press is refused before any
+     skeleton opens, so the button reads dead rather than clickable. */
+  outOfTokens?: boolean;
   onError: (message: string | null) => void;
   onGenerate: () => void;
 }) {
@@ -93,8 +97,11 @@ export function Composer({
   const wrapRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   /* A run in flight is not a lock: it holds its own tile in the grid, so the
-     only thing that can stop a press is having nothing to say. */
-  const disabled = prompt.text.trim().length === 0;
+     only thing that can stop a press is having nothing to say — or having no
+     tokens left to spend. A zero balance refuses before any skeleton opens. */
+  const promptEmpty = prompt.text.trim().length === 0;
+  const blocked = outOfTokens === true;
+  const disabled = promptEmpty || blocked;
 
   /* One batch control, two mechanisms. A model that declares its own
      results-per-request gets that setting written; the rest are submitted once
@@ -211,7 +218,11 @@ export function Composer({
   const attachLabel = tray.allFull ? "Change the inputs" : "Add an input";
   const settingKey = overlay?.startsWith(SETTING) ? overlay.slice(SETTING.length) : null;
   const generateLabel = batchValue > 1 ? `Generate ${batchValue} results` : "Generate";
-  const generateTip = disabled ? "Write a prompt first" : `${generateLabel} · ${shortcut ?? "⌘↵"}`;
+  const generateTip = blocked
+    ? "Out of tokens — top up to generate"
+    : disabled
+      ? "Write a prompt first"
+      : `${generateLabel} · ${shortcut ?? "⌘↵"}`;
 
   return (
     <div className="ohf-dock" ref={dockRef} data-selecting={selecting}>
@@ -367,14 +378,15 @@ export function Composer({
                   type="button"
                   className="ohf-generate"
                   disabled={disabled}
-                  data-busy={generating}
-                  aria-label={generateLabel}
+                  data-busy={generating && !blocked}
+                  aria-label={blocked ? "Out of tokens — top up to generate" : generateLabel}
                   onClick={onGenerate}
                 >
                   {/* The sheen is the only thing a run in flight changes here:
                       the label still names what pressing does, because pressing
-                      is still allowed. Progress is the grid's to report. */}
-                  {generating && <span className="ohf-generate-sheen" aria-hidden />}
+                      is still allowed. Progress is the grid's to report. A zero
+                      balance keeps the grey dead state, never the busy tint. */}
+                  {generating && !blocked && <span className="ohf-generate-sheen" aria-hidden />}
                   <span className="ohf-generate-glyph" aria-hidden>
                     <ArrowUpIcon size={15} />
                   </span>
