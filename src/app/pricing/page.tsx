@@ -30,7 +30,7 @@ const FAQS: Array<[string, string]> = [
   ],
   [
     "How do I pay?",
-    "UroPay checkout in INR — UPI, cards, netbanking, wallets, pay-later and EMI. Pick a pack, complete payment on the hosted page, tokens land when the payment confirms. Order history lives at /studio/billing.",
+    "UroPay direct-UPI: pick a pack, scan the QR in any UPI app, pay the exact amount, then paste the 12-digit UTR back on this page. The companion app confirms the bank SMS and tokens land automatically — order history lives at /studio/billing.",
   ],
   [
     "Where do I see my balance?",
@@ -86,7 +86,7 @@ export default function PricingPage() {
               </Reveal>
             ))}
           </div>
-          <p className="of-pack-note">Secure checkout via <strong>UroPay</strong> — UPI, cards, netbanking, wallets &amp; EMI. Tokens never expire.</p>
+          <p className="of-pack-note">Secure UPI via <strong>UroPay</strong> — scan the QR, pay, paste the UTR. Tokens never expire.</p>
         </section>
 
         <section className="of-wrap of-section" aria-labelledby="rates-h">

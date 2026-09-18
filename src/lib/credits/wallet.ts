@@ -87,13 +87,14 @@ export type TokenOrder = {
   status: string;
   uropay_order_id: string | null;
   tenant_ref: string;
+  submitted_utr: string | null;
   created_at: string;
 };
 
 export async function getMyOrders(userId: string, limit = 10): Promise<TokenOrder[]> {
   const { data, error } = await adminClient()
     .from("uropay_orders")
-    .select("id,pack_id,tokens,amount,currency,status,uropay_order_id,tenant_ref,created_at")
+    .select("id,pack_id,tokens,amount,currency,status,uropay_order_id,tenant_ref,submitted_utr,created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -120,17 +121,59 @@ export async function createPendingOrder(row: {
     status: "pending",
     tenant_ref: row.tenantRef,
   });
-  if (error) throw new Error("Could not start checkout.");
+  if (error) {
+    if (isPermissionFailure(error)) throw billingPermissionError();
+    // Name the cause so "Could not start checkout" is actionable: missing
+    // migration ("relation does not exist") vs RLS vs constraint. No secrets.
+    const code = (error as { code?: string }).code ?? "db";
+    throw new Error(`Could not start checkout (${code}: ${error.message.slice(0, 160)}).`);
+  }
 }
 
 export async function findOrderByTenantRef(tenantRef: string): Promise<OrderRow | null> {
   const { data, error } = await adminClient()
     .from("uropay_orders")
-    .select("id,user_id,pack_id,tokens,amount,currency,status,uropay_order_id,tenant_ref,created_at,paid_at")
+    .select("id,user_id,pack_id,tokens,amount,currency,status,uropay_order_id,tenant_ref,submitted_utr,created_at,paid_at")
     .eq("tenant_ref", tenantRef)
     .maybeSingle();
   if (error) throw new Error("Could not load order.");
   return (data ?? null) as OrderRow | null;
+}
+
+export async function findOrderByProviderId(uroPayOrderId: string): Promise<OrderRow | null> {
+  const { data, error } = await adminClient()
+    .from("uropay_orders")
+    .select("id,user_id,pack_id,tokens,amount,currency,status,uropay_order_id,tenant_ref,submitted_utr,created_at,paid_at")
+    .eq("uropay_order_id", uroPayOrderId)
+    .maybeSingle();
+  if (error) throw new Error("Could not load order.");
+  return (data ?? null) as OrderRow | null;
+}
+
+/** Match a companion-SMS webhook whose order ids arrived null. */
+export async function findOrderByUtr(utr: string): Promise<OrderRow | null> {
+  const clean = utr.trim();
+  if (!clean) return null;
+  const { data, error } = await adminClient()
+    .from("uropay_orders")
+    .select("id,user_id,pack_id,tokens,amount,currency,status,uropay_order_id,tenant_ref,submitted_utr,created_at,paid_at")
+    .eq("submitted_utr", clean)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error("Could not load order.");
+  return (data ?? null) as OrderRow | null;
+}
+
+export async function setSubmittedUtr(tenantRef: string, utr: string): Promise<void> {
+  const { error } = await adminClient()
+    .from("uropay_orders")
+    .update({ submitted_utr: utr.trim(), status: "utr_submitted" })
+    .eq("tenant_ref", tenantRef);
+  if (error) {
+    if (isPermissionFailure(error)) throw billingPermissionError();
+    throw new Error("Could not save UTR.");
+  }
 }
 
 export async function attachProviderOrder(tenantRef: string, uropayOrderId: string): Promise<void> {
@@ -141,11 +184,32 @@ export async function attachProviderOrder(tenantRef: string, uropayOrderId: stri
   if (error) throw new Error("Could not link payment order.");
 }
 
-const TERMINAL = new Set(["paid", "failed", "expired", "cancelled"]);
+const UPDATABLE = new Set(["pending", "utr_submitted", "review", "paid", "failed", "expired", "cancelled"]);
+
+/** UroPay provider status → our row status. */
+export function mapProviderStatus(provider: string): string {
+  switch (provider.toUpperCase()) {
+    case "COMPLETED":
+      return "paid";
+    case "FAILED":
+      return "failed";
+    case "EXPIRED":
+      return "expired";
+    case "CANCELLED":
+      return "cancelled";
+    case "REVIEW_REQUIRED":
+      return "review";
+    case "UTR_SUBMITTED":
+      return "utr_submitted";
+    default:
+      return "pending";
+  }
+}
 
 export async function setOrderStatus(tenantRef: string, status: string): Promise<void> {
-  if (!TERMINAL.has(status)) return;
-  await adminClient().from("uropay_orders").update({ status }).eq("tenant_ref", tenantRef);
+  if (!UPDATABLE.has(status)) return;
+  const { error } = await adminClient().from("uropay_orders").update({ status }).eq("tenant_ref", tenantRef);
+  if (error && isPermissionFailure(error)) throw billingPermissionError();
 }
 
 export async function markOrderPaid(orderId: string, uropayOrderId: string): Promise<boolean> {

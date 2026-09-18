@@ -11,6 +11,7 @@ import { POLL_DEADLINE_MS, stopWatching, watchRequest } from "@/generation/poll"
 import { useActive } from "@/generation/stores/active";
 import { useImagePrompt, useVideoPrompt } from "@/generation/stores/prompt";
 import { useSettings } from "@/generation/stores/settings";
+import { getMyBalance } from "@/lib/billing/actions";
 
 import { GRAIN_URI, artFor } from "./artwork";
 import { Composer } from "./composer";
@@ -163,7 +164,16 @@ function describeError(caught: unknown): string {
   return "Generation failed — try again; if it repeats, come back in a few minutes.";
 }
 
-export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: string }) {
+export function OpenHiggsfieldApp({
+  fontClassName = "",
+  initialBalance,
+}: {
+  fontClassName?: string;
+  /* Server-read token balance. Null/undefined means unknown — the press stays
+     allowed until a read proves the wallet is empty, so paying visitors are
+     never blocked by a slow fetch. */
+  initialBalance?: number | null;
+}) {
   const surface = useActive((state) => state.surface);
   const modelId = useActive((state) => state.model);
   const setModel = useActive((state) => state.setModel);
@@ -185,6 +195,13 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
      recent sheets on top, and a range extends from the last one touched. */
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState<SaveProgress | null>(null);
+  /* Live token balance. Starts from the server read, then revalidates on
+     mount and settles to zero the moment the server refuses for funds — so
+     the Generate press locks even when the first paint carried stale credit. */
+  const [balance, setBalance] = useState<number | null>(initialBalance ?? null);
+  const outOfTokens = balance !== null && balance <= 0;
+  const balanceRef = useRef(balance);
+  balanceRef.current = balance;
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const rangeAnchor = useRef<number | null>(null);
@@ -223,6 +240,22 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
   useEffect(() => {
     if (historyLoaded) void saveHistory(history);
   }, [historyLoaded, history]);
+
+  /* The server pill above the studio owns the canonical balance; re-read it on
+     mount so a purchase (or a spend in another tab) unlocks — or locks — the
+     press without a full page reload. Fail open: an unreadable wallet never
+     blocks a paying visitor. */
+  useEffect(() => {
+    let live = true;
+    void getMyBalance()
+      .then((value) => {
+        if (live) setBalance(value);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
 
   useEffect(() => {
     alive.current = true;
@@ -318,8 +351,14 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
 
   /* Presses do not wait on each other. A press snapshots its own plane, opens
      its own skeletons and keeps its own watch, so the composer is free the
-     moment the tiles appear and any number of runs can be in flight. */
+     moment the tiles appear and any number of runs can be in flight. A zero
+     balance never opens skeletons: the press is refused up front, matching
+     the disabled Generate button. */
   const generate = useCallback(async () => {
+    if (balanceRef.current !== null && balanceRef.current <= 0) {
+      setError("Out of tokens — top up to keep generating.");
+      return;
+    }
     const plane = assemblePlane();
     if (!plane.prompt.text.trim()) return;
 
@@ -381,6 +420,9 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
       } catch (caught) {
         if (!alive.current) return;
         const message = describeError(caught);
+        /* The server is the source of truth on funds: a refusal locks the
+           button immediately, even when the first paint carried stale credit. */
+        if (message.includes("Insufficient tokens")) setBalance(0);
         setError((prev) => prev ?? message);
       } finally {
         if (alive.current) {
@@ -390,6 +432,13 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
     };
 
     await Promise.all(slots.map(runOne));
+    /* Settle the pill and the press together: a spend (or a refund on a
+       failed submit) re-reads the wallet so the next press sees the truth. */
+    void getMyBalance()
+      .then((value) => {
+        if (alive.current) setBalance(value);
+      })
+      .catch(() => {});
   }, [resume]);
 
   /* Reuse restores the whole plane the run was made from — model, its dials,
@@ -640,6 +689,7 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
             focusNonce={focusNonce}
             history={history}
             selecting={selected.length > 0}
+            outOfTokens={outOfTokens}
             selection={
               <SelectionBar
                 records={pickedRecords}

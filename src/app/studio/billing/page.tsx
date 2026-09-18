@@ -38,7 +38,7 @@ export default async function BillingPage({
         <h1 id="billing-h" className="of-h2">Your tokens.</h1>
         <p className="of-lede">
           Balance: <strong style={{ color: "var(--of-lime)" }}>{balance} tokens</strong> · 1 token = $0.01 of
-          generation. Payments run through UroPay (UPI, cards, netbanking).
+          generation. Payments run through UroPay direct-UPI (scan QR, pay, paste the UTR).
         </p>
 
         {highlight && (
@@ -49,7 +49,11 @@ export default async function BillingPage({
               {highlight.tokens} tokens for ₹{highlight.amount}.{" "}
               {highlight.status === "paid"
                 ? "Credited — back to the studio."
-                : "If you just paid, give the webhook a minute, then refresh."}
+                : highlight.status === "review"
+                  ? "Under manual review (bank SMS didn't arrive) — it usually clears shortly."
+                  : highlight.status === "utr_submitted"
+                    ? "UTR received — waiting for the bank SMS confirmation."
+                    : "If you just paid, paste the UTR on /pricing#packs, then give it a minute and refresh."}
             </p>
             <Link href="/studio" className="of-btn of-btn--lime">Back to studio →</Link>
           </div>

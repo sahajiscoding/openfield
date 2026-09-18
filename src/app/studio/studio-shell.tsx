@@ -89,7 +89,7 @@ export function StudioShell({ email, balance }: { email: string | undefined; bal
         </div>
       </div>
 
-      <OpenHiggsfieldApp />
+      <OpenHiggsfieldApp initialBalance={balance} />
     </div>
   );
 }
