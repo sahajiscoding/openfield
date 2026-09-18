@@ -15,10 +15,23 @@ export async function proxy(request: NextRequest) {
   const { deviceId, minted } = resolveDeviceId(request.cookies.get(DEVICE_COOKIE)?.value);
   if (minted) response.cookies.set(DEVICE_COOKIE, deviceId, DEVICE_COOKIE_OPTIONS);
 
-  // 2) Supabase session. If env is missing (keys pasted later), don't block —
-  //    pages render their own "connect Supabase" guidance.
+  // 2) Supabase session. Fail closed: without configured auth nobody enters
+  //    gated routes — the login page explains what env is missing.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  const path = request.nextUrl.pathname;
+  const isStudio = path === "/studio" || path.startsWith("/studio/");
+
+  // No auth configured: everything gated funnels to /login, which renders
+  // the missing-env guidance instead of a dead form.
+  if ((!url || !anon) && isStudio) {
+    const login = request.nextUrl.clone();
+    login.pathname = "/login";
+    login.searchParams.set("next", path);
+    login.searchParams.set("error", "missing_env");
+    return NextResponse.redirect(login);
+  }
   if (!url || !anon) return response;
 
   const supabase = createServerClient(url, anon, {
@@ -37,8 +50,6 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-  const isStudio = path === "/studio" || path.startsWith("/studio/");
   const isLogin = path === "/login";
 
   if (isStudio && !user) {

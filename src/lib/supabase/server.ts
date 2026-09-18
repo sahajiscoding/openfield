@@ -29,3 +29,17 @@ export async function getSessionUser() {
   const { data } = await supabase.auth.getUser();
   return data.user;
 }
+
+/**
+ * Fail-closed session gate for Server Actions and Route Handlers.
+ * Throws when signed out; with `verified: true` also throws until the
+ * email address is confirmed — the gate in front of paid generation.
+ */
+export async function requireSessionUser(opts?: { verified?: boolean }) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Sign in to continue.");
+  if (opts?.verified && !user.email_confirmed_at) {
+    throw new Error("Verify your email to generate — check your inbox for the confirmation link.");
+  }
+  return user;
+}

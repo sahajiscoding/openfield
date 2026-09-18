@@ -1,0 +1,48 @@
+# Security gate: exact lockfile install, dependency audit, secret scan, typecheck.
+# The only third-party action is actions/checkout, pinned to a commit SHA
+# (verified via the GitHub API), never a floating tag.
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # actions/checkout v4 — SHA verified 2026-09-18 via api.github.com.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Toolchain
+        run: node --version && npm --version
+
+      - name: Install exactly from lockfile
+        run: npm ci
+
+      - name: Dependency audit (fail on high+)
+        run: npm audit --audit-level=high
+
+      - name: Secret scan (fail on keys, tokens, or committed env files)
+        run: |
+          set -euo pipefail
+          # No committed env files except the placeholder example.
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then
+            echo "::error::Committed env file with potential values."
+            exit 1
+          fi
+          # No private keys or provider tokens in tracked code/docs-code.
+          if git grep -nE 'BEGIN [A-Z ]*PRIVATE KEY|sk-live-[A-Za-z0-9]+|AKIA[0-9A-Z]{16}|xox[bpas]-[A-Za-z0-9-]+|SUPABASE_SERVICE_ROLE_KEY=[^[:space:]`]+|MUAPI_API_KEY=[^[:space:]`]+|OPEN_HIGGSFIELD_READ_WRITE_TOKEN=[^[:space:]`]+' -- . ':!*.md' ':!.env.example' ':!package-lock.json'; then
+            echo "::error::Possible secret committed — rotate it and remove."
+            exit 1
+          fi
+          echo "Secret scan clean."
+
+      - name: Typecheck
+        run: npx tsc --noEmit
