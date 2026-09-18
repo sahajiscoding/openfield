@@ -41,7 +41,7 @@ Fill `.env.local` (same vars go in Vercel → Project → Settings → Environme
 1. **Supabase** (sign-in + billing): [supabase.com](https://supabase.com) → new project → Settings → API → `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` (server-only, powers wallets/ledger). Run `supabase/migrations/001_generations.sql` then `002_credits.sql` in SQL Editor. Auth → URL Configuration → Redirect to `http://localhost:3000/auth/callback` (+ your Vercel URL later). Enable Google provider optionally.
 2. **Higgsfield operator key**: `HF_API_KEY=id:secret` (server-only, from the Higgsfield team / console). `HF_API_BASE_URL` defaults to `https://api.higgsfield.ai`.
 3. **UroPay** ([docs](https://api.uropai.in/documentation)): `UROPAY_API_KEY` + `UROPAY_API_SECRET` (server-only; TEST pair first, PRODUCTION after KYC). Set the account webhook URL to `https://<your-app>.vercel.app/api/uropay/webhook` (per-order override is also sent).
-4. **Blob uploads** (optional): `OPEN_HIGGSFIELD_READ_WRITE_TOKEN=` — if empty, `/api/blob` 503s.
+4. **Uploads**: reference frames go to the Supabase Storage bucket `openfield-uploads` (created public by migration 001) — no extra env needed.
 
 ```bash
 npm run build && npm run start
