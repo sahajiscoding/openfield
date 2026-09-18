@@ -178,8 +178,9 @@
   font-weight: 600;
   color: var(--of-lime);
 }
-\n.of-hero-ai {
+.of-hero-ai {
   display: block;
+  width: fit-content;
 }
 
 .of-sub {
