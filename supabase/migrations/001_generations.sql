@@ -32,12 +32,16 @@ on conflict (id) do nothing;
 
 drop policy if exists "authenticated upload" on storage.objects;
 create policy "authenticated upload" on storage.objects
-  for insert to authenticated with check (bucket_id = 'openfield-uploads');
+  for insert to authenticated
+  with check (bucket_id = 'openfield-uploads' and owner = auth.uid());
 
 drop policy if exists "public read uploads" on storage.objects;
 create policy "public read uploads" on storage.objects
   for select using (bucket_id = 'openfield-uploads');
 
+-- Deletes are owner-scoped: any authenticated user must NOT be able to
+-- delete anyone else's frames.
 drop policy if exists "own deletes" on storage.objects;
 create policy "own deletes" on storage.objects
-  for delete to authenticated using (bucket_id = 'openfield-uploads');
+  for delete to authenticated
+  using (bucket_id = 'openfield-uploads' and owner = auth.uid());

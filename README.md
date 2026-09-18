@@ -14,8 +14,16 @@ Built for the **$50K Higgsfield-competitor challenge**: fuses the two open-sourc
 - `/` — editorial landing (Higgsfield-fluent, $10K checklist)
 - `/pricing` — free studio + pay-providers-directly tiers, comparison, FAQ
 - `/byok` — bring-your-own-key guide with live per-browser key status
-- `/login` — Supabase sign-in (magic link · password · Google)
+- `/login` — Supabase sign-in (magic link · password · Google) + reset flow
 - `/studio` — gated studio: **Higgsfield · 38** tab + **MuAPI · 400+** tab
+- `/studio/security` — opt-in TOTP second factor, key hygiene notes
+
+## Security model
+
+- Sign-in required for all generation, uploads, and key management (server-verified session + confirmed email for paid routes).
+- Provider keys live in `httpOnly`/`Secure`/`SameSite=Lax` cookies, called only from server actions, wiped on sign-out.
+- Per-user/per-IP rate limits on submits, polls, and uploads; 256 MB upload cap; CSP + HSTS + anti-clickjacking headers.
+- `GET /auth/callback` only redirects same-origin `next` targets. CI (`.github/workflows/security.yml`) runs `npm ci`, `npm audit`, a secret scan, and typecheck.
 
 ## Setup (5 min)
 

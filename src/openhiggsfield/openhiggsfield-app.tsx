@@ -154,7 +154,12 @@ function describeError(caught: unknown): string {
   if (caught instanceof MissingCredentialsError || message.includes("Missing platform key")) {
     return "Add your platform key to generate.";
   }
-  return `Generation failed — ${message}. Try again; if it repeats, check the key in the sidebar.`;
+  // Provider detail stays in server logs (see actions.ts): the UI shows a
+  // generic failure so error text can't oracle key validity to strangers.
+  if (message.includes("Sign in") || message.includes("Verify your email") || message.includes("Too many requests")) {
+    return message;
+  }
+  return "Generation failed — try again; if it repeats, reconnect your key in the studio.";
 }
 
 export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: string }) {

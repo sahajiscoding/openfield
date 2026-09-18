@@ -14,14 +14,15 @@ export const metadata: Metadata = {
 };
 
 export default async function StudioPage() {
+  // Fail closed: any auth misconfiguration sends the visitor to /login
+  // instead of rendering an ungated shell.
   let email: string | undefined;
   try {
     const user = await getSessionUser();
     if (!user) redirect("/login?next=/studio");
     email = user.email ?? undefined;
   } catch {
-    // Supabase env missing — render shell in demo mode with guidance.
-    email = undefined;
+    redirect("/login?next=/studio&error=missing_env");
   }
   return (
     <main aria-label="Openfield studio">

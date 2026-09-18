@@ -1,3 +1,4 @@
+import { createServerClient } from "@supabase/ssr";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -8,10 +9,38 @@ import {
   blobPathname,
   resolveDeviceId,
 } from "@/generation/device";
+import { clientIpFromHeaders, enforceRateLimit } from "@/lib/rate-limit";
 
-// Anyone who can hit this route can upload. Gate it when auth exists.
+/** Uploads bill the operator's Blob store: signed-in, verified users only. */
+async function requireUploader(): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    throw new Error("Auth is not configured — uploads disabled.");
+  }
+  const jar = await cookies();
+  const supabase = createServerClient(url, anon, {
+    cookies: { getAll: () => jar.getAll(), setAll: () => {} },
+  });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to upload.");
+  if (!user.email_confirmed_at) {
+    throw new Error("Verify your email to upload — check your inbox.");
+  }
+}
 
 export async function POST(request: Request): Promise<NextResponse> {
+  try {
+    enforceRateLimit(`blob:${clientIpFromHeaders(request.headers)}`, 20, 60_000);
+    await requireUploader();
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Upload denied.";
+    const status = message.includes("Too many requests") ? 429 : 401;
+    return NextResponse.json({ error: message }, { status });
+  }
+
   const incoming = (await request.json()) as HandleUploadBody;
   const device =
     incoming.type === "blob.generate-client-token" ? await readDeviceId() : null;
@@ -37,6 +66,8 @@ export async function POST(request: Request): Promise<NextResponse> {
             "audio/wav",
             "audio/x-wav",
           ],
+          // 256 MB per file: room for video start frames, bounded Blob bills.
+          maximumSizeInBytes: 256 * 1024 * 1024,
           addRandomSuffix: true,
         };
       },

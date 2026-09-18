@@ -6,10 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 
+/** Client-side mirror of the callback's safeNext: post-login stays on-origin. */
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) {
+    return "/studio";
+  }
+  return raw;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") ?? "/studio";
+  const next = safeNext(params.get("next"));
   const urlError = params.get("error");
 
   const [email, setEmail] = useState("");
@@ -145,6 +153,11 @@ export function LoginForm() {
       <p className="of-fineprint">
         Protected by Supabase Auth. <Link href="/">← Back to Openfield</Link>
       </p>
+      {mode === "password" && (
+        <p className="of-fineprint">
+          <Link href="/login/reset">Forgot your password?</Link>
+        </p>
+      )}
     </div>
   );
 }

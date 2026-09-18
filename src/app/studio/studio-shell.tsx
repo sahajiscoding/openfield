@@ -64,6 +64,19 @@ export function StudioShell({ email }: { email: string | undefined }) {
   }, []);
 
   async function signOut() {
+    // Wipe provider keys first: they live in httpOnly cookies the browser
+    // JS can't clear, and must not survive for the next profile on this machine.
+    try {
+      const { clearPlatformCredentials } = await import("@/generation/actions");
+      await clearPlatformCredentials();
+    } catch {
+      // already empty — nothing to wipe
+    }
+    try {
+      await clearMuapiKey();
+    } catch {
+      // already empty — nothing to wipe
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
@@ -106,6 +119,12 @@ export function StudioShell({ email }: { email: string | undefined }) {
         )}
         <div className="of-studio-user">
           <span title={email ?? ""}>{email ?? "Signed in"}</span>
+          <Link
+            href="/studio/security"
+            style={{ color: "var(--of-smoke,#9aa08c)", fontSize: 13 }}
+          >
+            Security
+          </Link>
           <button type="button" onClick={() => void signOut()}>Sign out</button>
         </div>
       </div>
