@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { hasPlatformCredentials, submitGeneration } from "@/generation/actions";
-import { MissingCredentialsError } from "@/generation/credentials";
+import { submitGeneration } from "@/generation/actions";
 import { MODELS, getModel } from "@/generation/catalog";
 import type { Surface } from "@/generation/catalog";
 import { assemblePlane } from "@/generation/plane";
@@ -16,7 +15,6 @@ import { useSettings } from "@/generation/stores/settings";
 import { GRAIN_URI, artFor } from "./artwork";
 import { Composer } from "./composer";
 import { fileNameFor, saveFile } from "./download";
-import { KeyModal } from "./key-modal";
 import {
   CROSS_VIEWS,
   countSetting,
@@ -151,15 +149,18 @@ function failureText(status: GenerationStatus): string {
 
 function describeError(caught: unknown): string {
   const message = caught instanceof Error ? caught.message : String(caught);
-  if (caught instanceof MissingCredentialsError || message.includes("Missing platform key")) {
-    return "Add your platform key to generate.";
-  }
-  // Provider detail stays in server logs (see actions.ts): the UI shows a
-  // generic failure so error text can't oracle key validity to strangers.
-  if (message.includes("Sign in") || message.includes("Verify your email") || message.includes("Too many requests")) {
+  // Auth, billing, and throttle states are user-actionable and safe to show;
+  // provider detail stays in server logs so errors can't oracle anything.
+  if (
+    message.includes("Sign in") ||
+    message.includes("Verify your email") ||
+    message.includes("Too many requests") ||
+    message.includes("Insufficient tokens") ||
+    message.includes("not configured")
+  ) {
     return message;
   }
-  return "Generation failed — try again; if it repeats, reconnect your key in the studio.";
+  return "Generation failed — try again; if it repeats, come back in a few minutes.";
 }
 
 export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: string }) {
@@ -184,8 +185,6 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
      recent sheets on top, and a range extends from the last one touched. */
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState<SaveProgress | null>(null);
-  const [keyConfigured, setKeyConfigured] = useState(false);
-  const [keysOpen, setKeysOpen] = useState(false);
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const rangeAnchor = useRef<number | null>(null);
@@ -224,13 +223,6 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
   useEffect(() => {
     if (historyLoaded) void saveHistory(history);
   }, [historyLoaded, history]);
-
-  useEffect(() => {
-    void hasPlatformCredentials().then((ready) => {
-      setKeyConfigured(ready);
-      if (!ready) setKeysOpen(true);
-    });
-  }, []);
 
   useEffect(() => {
     alive.current = true;
@@ -279,7 +271,6 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
       } catch (caught) {
         if (!alive.current) return;
         const message = describeError(caught);
-        if (message.includes("platform key")) setKeysOpen(true);
         setHistory((prev) => {
           const next = replaceRequest(prev, requestId, failedRows(requestId, expected, draft, message));
           void saveHistory(next);
@@ -329,11 +320,6 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
      its own skeletons and keeps its own watch, so the composer is free the
      moment the tiles appear and any number of runs can be in flight. */
   const generate = useCallback(async () => {
-    if (!keyConfigured) {
-      setKeysOpen(true);
-      setError("Add your platform key to generate.");
-      return;
-    }
     const plane = assemblePlane();
     if (!plane.prompt.text.trim()) return;
 
@@ -395,7 +381,6 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
       } catch (caught) {
         if (!alive.current) return;
         const message = describeError(caught);
-        if (message.includes("platform key")) setKeysOpen(true);
         setError((prev) => prev ?? message);
       } finally {
         if (alive.current) {
@@ -405,7 +390,7 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
     };
 
     await Promise.all(slots.map(runOne));
-  }, [keyConfigured, resume]);
+  }, [resume]);
 
   /* Reuse restores the whole plane the run was made from — model, its dials,
      then the words. A reuse that dropped the ratio and resolution would
@@ -601,7 +586,6 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
   );
 
   const openViewer = useCallback((id: string) => setViewerId(id), []);
-  const openKeys = useCallback(() => setKeysOpen(true), []);
   const runGenerate = useCallback(() => void generate(), [generate]);
   const downloadSelection = useCallback(() => void downloadPicked(), [downloadPicked]);
   const dismissDeleted = useCallback(() => setDeleted(null), []);
@@ -629,13 +613,7 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
     <div className={`ohf ${fontClassName}`} style={{ "--ohf-grain": GRAIN_URI } as React.CSSProperties}>
       <div className="ohf-shell">
         <main className="ohf-main">
-          <Topbar
-            view={view}
-            onView={switchView}
-            busy={busy}
-            keyConfigured={keyConfigured}
-            onKeys={openKeys}
-          />
+          <Topbar view={view} onView={switchView} busy={busy} />
 
           <Gallery
             view={view}
@@ -699,20 +677,6 @@ export function OpenHiggsfieldApp({ fontClassName = "" }: { fontClassName?: stri
             onDelete={() => {
               setViewerId(null);
               deleteRun(viewerItem);
-            }}
-          />
-        )}
-        {keysOpen && (
-          <KeyModal
-            configured={keyConfigured}
-            onClose={() => setKeysOpen(false)}
-            onSaved={() => {
-              setKeyConfigured(true);
-              setKeysOpen(false);
-              setError(null);
-            }}
-            onCleared={() => {
-              setKeyConfigured(false);
             }}
           />
         )}

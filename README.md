@@ -1,28 +1,31 @@
-# Openfield — the open-source Higgsfield alternative
+# Openfield — the open Higgsfield studio
 
-> One prompt bar for cinematic AI image + video. Supabase sign-in. Your API key, pasted later. MIT.
+> One prompt bar for cinematic AI image + video across 38 Higgsfield models. Supabase sign-in. Pay per generation in tokens via UroPay. MIT.
 
-Built for the **$50K Higgsfield-competitor challenge**: fuses the two open-source starters into one deployable studio with a $10K-checklist UI.
+Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfield studio ([wide-trace/open-higgsfield](https://github.com/wide-trace/open-higgsfield)) — 38-model catalog, one-composer studio, server-actions-only generation (`POST /{model}`, `GET /requests/{id}/status`), Zustand + IndexedDB, masonry gallery + viewer — extended with Supabase auth, token billing, and UroPay checkout. Generation runs **only** on the official Higgsfield API.
 
-| Upstream | What Openfield takes |
-|---|---|
-| [wide-trace/open-higgsfield](https://github.com/wide-trace/open-higgsfield) | 38-model catalog, one-composer studio, server-actions-only generation (`POST /{model}`, `GET /requests/{id}/status`, `Authorization: Key id:secret`), Zustand + IndexedDB, Vercel Blob uploads, masonry gallery + viewer |
-| [anil-matcha/open-generative-ai](https://github.com/anil-matcha/open-generative-ai) | MuAPI gateway pattern (`x-api-key`, submit → poll `/predictions/{id}/result`), dual-mode T2I/I2I + T2V/I2V thinking, multi-image inputs, lip-sync studio inputs |
+## How money works
+
+- **1 token = $0.01** of Higgsfield API cost. Rates mirror the official API card (`src/lib/credits/pricing.ts` — the one file to adjust if your key carries different rates).
+- Example — 720p · 16:9 · 30s: Seedance 2.5 → **260 tokens** (~$2.60) · Kling 3.0 → **126** (~$1.26) · Wan 3.0 Prime → **143** · MiniMax H3 → **215** · Soul 2 image → **1**.
+- Tokens spend on submit, **refund automatically** if the platform never queues the request. Tokens never expire.
+- Packs (INR, via UroPay): ₹199 → 200 · ₹499 → 550 · ₹1499 → 1800 · ₹4999 → 6500.
 
 ## Routes
 
-- `/` — editorial landing (Higgsfield-fluent, $10K checklist)
-- `/pricing` — free studio + pay-providers-directly tiers, comparison, FAQ
-- `/byok` — bring-your-own-key guide with live per-browser key status
+- `/` — editorial landing
+- `/pricing` — token packs (UroPay checkout) + full per-model rate card, comparison, FAQ
 - `/login` — Supabase sign-in (magic link · password · Google) + reset flow
-- `/studio` — gated studio: **Higgsfield · 38** tab + **MuAPI · 400+** tab
-- `/studio/security` — opt-in TOTP second factor, key hygiene notes
+- `/studio` — gated studio (38 Higgsfield models, live token balance in the top bar)
+- `/studio/billing` — balance, UroPay order history, per-order status
+- `/studio/security` — opt-in TOTP second factor
 
 ## Security model
 
-- Sign-in required for all generation, uploads, and key management (server-verified session + confirmed email for paid routes).
-- Provider keys live in `httpOnly`/`Secure`/`SameSite=Lax` cookies, called only from server actions, wiped on sign-out.
-- Per-user/per-IP rate limits on submits, polls, and uploads; 256 MB upload cap; CSP + HSTS + anti-clickjacking headers.
+- Sign-in (+ confirmed email for paid routes) required for all generation, uploads, checkout, and billing reads.
+- The single operator Higgsfield key (`HF_API_KEY`) is server-only; the browser never touches provider credentials.
+- Per-user/per-IP rate limits on submits, polls, uploads, and checkout; 256 MB upload cap; CSP + HSTS + anti-clickjacking headers.
+- UroPay webhook verifies HMAC-SHA256 + timestamp freshness + event-id replay guard, then treats `GET /v1/orders` as authoritative before crediting — idempotent on re-delivery.
 - `GET /auth/callback` only redirects same-origin `next` targets. CI (`.github/workflows/security.yml`) runs `npm ci`, `npm audit`, a secret scan, and typecheck.
 
 ## Setup (5 min)
@@ -33,13 +36,12 @@ cp .env.example .env.local
 npm run dev   # http://localhost:3000
 ```
 
-Fill `.env.local`:
+Fill `.env.local` (same vars go in Vercel → Project → Settings → Environment Variables):
 
-1. **Supabase** (required for sign-in): [supabase.com](https://supabase.com) → new project → Settings → API → `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Run `supabase/migrations/001_generations.sql` in SQL Editor. Set Auth → URL Configuration → Redirect to `http://localhost:3000/auth/callback` ( + your Vercel URL later). Enable Google provider optionally.
-2. **Generation keys — paste later, app runs without them:**
-   - `HF_API_BASE_URL=` — Higgsfield-compatible origin (server-only). In-studio: **Add key** → `id:secret` (httpOnly cookie).
-   - `MUAPI_API_KEY=` (optional server default) + `MUAPI_BASE_URL=https://api.muapi.ai` — or paste per-user in Studio → MuAPI tab → **MuAPI key**.
-   - `OPEN_HIGGSFIELD_READ_WRITE_TOKEN=` (optional) — Vercel Blob uploads. If empty, `/api/blob` 503s and uploads fall back to Supabase `openfield-uploads` bucket.
+1. **Supabase** (sign-in + billing): [supabase.com](https://supabase.com) → new project → Settings → API → `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` (server-only, powers wallets/ledger). Run `supabase/migrations/001_generations.sql` then `002_credits.sql` in SQL Editor. Auth → URL Configuration → Redirect to `http://localhost:3000/auth/callback` (+ your Vercel URL later). Enable Google provider optionally.
+2. **Higgsfield operator key**: `HF_API_KEY=id:secret` (server-only, from the Higgsfield team / console). `HF_API_BASE_URL` defaults to `https://api.higgsfield.ai`.
+3. **UroPay** ([docs](https://api.uropai.in/documentation)): `UROPAY_API_KEY` + `UROPAY_API_SECRET` (server-only; TEST pair first, PRODUCTION after KYC). Set the account webhook URL to `https://<your-app>.vercel.app/api/uropay/webhook` (per-order override is also sent).
+4. **Blob uploads** (optional): `OPEN_HIGGSFIELD_READ_WRITE_TOKEN=` — if empty, `/api/blob` 503s.
 
 ```bash
 npm run build && npm run start
@@ -50,7 +52,8 @@ npm run build && npm run start
 1. Push to `sahajiscoding/openfield`, Import in Vercel.
 2. Env vars: same as `.env.example` (only `NEXT_PUBLIC_*` reach the browser).
 3. Supabase → Auth → Redirect URLs: add `https://<your-app>.vercel.app/auth/callback`.
-4. Demo script for the QT: sign in → Higgsfield tab → Add key → Seedance 2.5 → generate → MuAPI tab → Veo 3 → generate.
+4. UroPay dashboard → webhook URL: `https://<your-app>.vercel.app/api/uropay/webhook`.
+5. Demo script for the QT: sign in → buy Starter pack (TEST key + test card) → Seedance 2.5 720p → watch 260 tokens spend → order lands in `/studio/billing`.
 
 ## Design ($10K checklist)
 

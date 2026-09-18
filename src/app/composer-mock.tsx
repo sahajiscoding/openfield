@@ -3,15 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type MockTab = "video" | "image" | "lipsync";
+type MockTab = "video" | "image";
 
 const TABS: Record<
   MockTab,
-  { label: string; provider: "higgsfield" | "muapi"; model: string; chips: string[]; prompt: string }
+  { label: string; model: string; chips: string[]; prompt: string }
 > = {
   video: {
     label: "Video",
-    provider: "higgsfield",
     model: "seedance-2.5",
     chips: ["16:9", "5s", "720p + audio"],
     prompt:
@@ -19,28 +18,19 @@ const TABS: Record<
   },
   image: {
     label: "Image",
-    provider: "higgsfield",
     model: "soul-2",
     chips: ["4:3", "HD", "enhance on"],
     prompt:
       "Editorial portrait of a jazz singer in a smoke-filled club, single spotlight, medium format, shallow depth of field",
   },
-  lipsync: {
-    label: "Lip Sync",
-    provider: "muapi",
-    model: "muapi-infinitetalk",
-    chips: ["9:16", "720p", "+ audio"],
-    prompt:
-      "Close-up portrait of a soul singer at a vintage microphone, warm stage light, subtle head movement",
-  },
 };
 
-const ORDER: MockTab[] = ["video", "image", "lipsync"];
+const ORDER: MockTab[] = ["video", "image"];
 
 /**
  * Landing-page composer that actually works: tabs switch the demo shot,
  * the prompt is editable, and Generate deep-links into /studio with the
- * provider + model + prompt preselected (see StudioShell query prefill).
+ * model + prompt preselected (see StudioShell query prefill).
  */
 export function ComposerMock() {
   const router = useRouter();
@@ -56,7 +46,6 @@ export function ComposerMock() {
   function go() {
     if (!prompt.trim()) return;
     const q = new URLSearchParams({
-      provider: active.provider,
       model: active.model,
       prompt: prompt.trim().slice(0, 2000),
     });
@@ -101,7 +90,7 @@ export function ComposerMock() {
           />
         </div>
         <div className="of-mock-row">
-          <span className="of-chip of-chip--lime">{tab === "video" ? "Seedance 2.5" : tab === "image" ? "Soul 2" : "Infinite Talk"}</span>
+          <span className="of-chip of-chip--lime">{tab === "video" ? "Seedance 2.5" : "Soul 2"}</span>
           {active.chips.map((c) => (
             <span key={c} className="of-chip">{c}</span>
           ))}

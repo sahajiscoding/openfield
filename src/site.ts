@@ -20,7 +20,7 @@ export const SITE_DESCRIPTOR = "Open-source AI video studio";
 export const SITE_TITLE = `${SITE_NAME} — ${SITE_DESCRIPTOR}`;
 
 export const SITE_DESCRIPTION =
-  "Openfield is the open-source Higgsfield alternative — one prompt bar for image and video, Seedance 2.5 + Kling + Soul + 400 MuAPI models, Supabase sign-in, and every finished run in one gallery.";
+  "Openfield is the open Higgsfield studio — one prompt bar for image and video across 38 Higgsfield models, Supabase sign-in, token billing via UroPay, and every finished run in one gallery.";
 
 /** Near-black cinematic ground; also the installed-app and browser-chrome color. */
 export const STUDIO_BG = "#08090a";

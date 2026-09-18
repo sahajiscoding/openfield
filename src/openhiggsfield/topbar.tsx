@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { VIEWS, VIEW_LABELS, type GalleryView } from "./data";
-import { AssetsIcon, HeartIcon, ImageIcon, KeyIcon, VideoIcon } from "./icons";
+import { AssetsIcon, HeartIcon, ImageIcon, VideoIcon } from "./icons";
 
 const VIEW_ICONS: Record<GalleryView, () => React.ReactNode> = {
   image: () => <ImageIcon />,
@@ -16,14 +16,10 @@ export function Topbar({
   view,
   onView,
   busy,
-  keyConfigured,
-  onKeys,
 }: {
   view: GalleryView;
   onView: (next: GalleryView) => void;
   busy: boolean;
-  keyConfigured: boolean;
-  onKeys: () => void;
 }) {
   const tabsRef = useRef<HTMLDivElement>(null);
   const [thumb, setThumb] = useState<{ x: number; w: number } | null>(null);
@@ -120,23 +116,20 @@ export function Topbar({
         </div>
       </div>
 
-      {/* Generations run on the visitor's own platform key, so this both states
-          whether one is held and opens the modal that sets it — and its lamp is
-          the studio's liveness, the one place accent moves. */}
+      {/* The lamp is the studio's liveness: it moves only while runs are in
+          flight. Generation bills tokens on the operator key — see /pricing. */}
       <div className="ohf-bar ohf-enter-1">
-        <button
-          type="button"
+        <span
           className="ohf-key"
           data-busy={busy}
-          data-ready={keyConfigured}
-          onClick={onKeys}
-          aria-label={keyConfigured ? "Edit platform key" : "Add platform key"}
-          title={keyConfigured ? "Edit platform key" : "Add platform key"}
+          data-ready={true}
+          role="status"
+          aria-label={busy ? "Rendering runs" : "Studio ready"}
+          title="Token balance lives in the top bar — top up on /pricing"
         >
-          <KeyIcon />
-          <span className="ohf-key-text">{keyConfigured ? "Your key" : "Add key"}</span>
+          <span className="ohf-key-text">{busy ? "Rendering" : "Ready"}</span>
           <span className="ohf-lamp" />
-        </button>
+        </span>
       </div>
     </div>
   );
