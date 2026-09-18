@@ -129,8 +129,8 @@ export default function LandingPage() {
             {TOKEN_PACKS.map((p, i) => (
               <Reveal key={p.id} as="article" className={`of-card of-tier${i === 1 ? " of-tier--hot" : ""}`}>
                 {p.tag && <span className="of-flag of-flag--lime">{p.tag}</span>}
-                <h3 style={{ fontSize: 24 }}>₹{p.inr}</h3>
-                <p className="of-price" style={{ fontSize: 40 }}>{p.tokens} <span className="of-per">tokens</span></p>
+                <h3 style={{ fontSize: 27 }}>₹{p.inr}</h3>
+                <p className="of-price" style={{ fontSize: 50 }}>{p.tokens} <span className="of-per">tokens</span></p>
                 <p>{p.blurb}</p>
                 <BuyPackForm packId={p.id} label={`Buy ${p.tokens} tokens`} />
               </Reveal>
