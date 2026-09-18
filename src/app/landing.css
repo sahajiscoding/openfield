@@ -857,3 +857,66 @@
   border-radius: 7px;
   color: var(--of-bone);
 }
+
+/* ── Token packs: airy 2×2, never a squeezed 4-up ────────── */
+.of-packs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.of-pack {
+  padding: 30px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.of-pack h3 {
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--of-smoke);
+  margin: 14px 0 4px;
+}
+
+.of-pack-tokens {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(38px, 4vw, 52px);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.of-pack-tokens .of-per {
+  font-size: 15px;
+}
+
+.of-pack-price {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 10px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.of-pack-price span {
+  color: var(--of-smoke);
+  font-weight: 500;
+  font-size: 13.5px;
+}
+
+.of-pack .of-blurb {
+  color: var(--of-smoke);
+  font-size: 14.5px;
+  margin: 10px 0 22px;
+  flex: 1;
+}
+
+@media (max-width: 700px) {
+  .of-packs-grid {
+    grid-template-columns: 1fr;
+  }
+}
