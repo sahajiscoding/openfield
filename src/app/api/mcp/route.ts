@@ -276,14 +276,22 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function toolError(id: unknown, message: string) {
+function toolError(
+  id: unknown,
+  message: string,
+  headers: HeadersInit = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  },
+) {
   return reply(
     id,
     {
       isError: true,
       content: [{ type: "text", text: message }],
     },
-    { headers: corsHeaders() },
+    { headers },
   );
 }
 
