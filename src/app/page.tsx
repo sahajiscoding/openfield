@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { TOKEN_PACKS } from "@/lib/credits/packs";
 import { ComposerMock } from "./composer-mock";
+import { LandingNav } from "./nav";
+import { BuyPackForm } from "./pricing/buy-form";
 import { Reveal } from "./reveal";
 import "./landing.css";
 
@@ -31,21 +34,7 @@ const FX = [
 export default function LandingPage() {
   return (
     <div className="of-landing">
-      <header className="of-nav">
-        <div className="of-wrap of-nav-inner">
-          <Link href="/" className="of-brand" aria-label="Openfield home">
-            <span className="of-mark" aria-hidden>○</span> Openfield
-          </Link>
-          <nav className="of-nav-links" aria-label="Primary">
-            <a href="#how">How it works</a>
-            <a href="#effects">Effects</a>
-            <a href="#models">Models</a>
-            <Link href="/pricing">Pricing</Link>
-          </nav>
-          <Link href="/login" className="of-btn of-btn--ghost of-btn--nav-sign">Sign in</Link>
-          <Link href="/studio" className="of-btn of-btn--lime">Open studio →</Link>
-        </div>
-      </header>
+      <LandingNav />
 
       <main>
         <section className="of-wrap of-hero" aria-labelledby="hero-h">
@@ -86,7 +75,7 @@ export default function LandingPage() {
           <Reveal><p className="of-lede">No subscriptions, no credits casino. One token is $0.01 of Higgsfield API cost — spend per generation, refund on failure.</p></Reveal>
           <div className="of-grid-3">
             <Reveal as="article" className="of-card"><span className="n">01</span><h3>Sign in with Supabase</h3><p>Magic link, password, or Google OAuth. Sessions refresh at the edge; <code>/studio</code> is gated until you&apos;re in.</p></Reveal>
-            <Reveal as="article" className="of-card" delay={90}><span className="n">02</span><h3>Grab tokens</h3><p>UroPay packs in INR — UPI, cards, netbanking. 720p 16:9 30s of Seedance 2.5 is 260 tokens. Balance lives in the studio top bar.</p></Reveal>
+            <Reveal as="article" className="of-card" delay={90}><span className="n">02</span><h3>Grab tokens</h3><p>UroPay packs in INR — direct UPI: scan the QR, pay, paste the UTR. 720p 16:9 30s of Seedance 2.5 is 260 tokens. Balance lives in the studio top bar.</p></Reveal>
             <Reveal as="article" className="of-card" delay={180}><span className="n">03</span><h3>One bar, every model</h3><p>The catalog is the source of truth: pick a model, the settings rail and media roles render themselves. <code>⌘/Ctrl + Enter</code> submits.</p></Reveal>
           </div>
         </section>
@@ -130,6 +119,31 @@ export default function LandingPage() {
             <Reveal as="article" className="of-card"><span className="n">HIGGSFIELD API</span><h3>Submit → poll → bloom</h3><p><code>POST /&#123;model&#125;</code> then <code>GET /requests/&#123;id&#125;/status</code> under the operator key. Server actions are the only caller — the browser never touches provider credentials.</p></Reveal>
             <Reveal as="article" className="of-card" delay={90}><span className="n">TOKENS</span><h3>Spend on submit, refund on failure</h3><p>Cost quotes derive from the official $/sec rate card at 100 tokens per $1. Balance in the top bar, history on <code>/studio/billing</code>. <Link href="/pricing">Full rate card →</Link></p></Reveal>
           </div>
+        </section>
+
+        <section id="pricing" className="of-wrap of-section" aria-labelledby="pricing-h">
+          <Reveal><p className="of-kicker">Pricing</p></Reveal>
+          <Reveal><h2 id="pricing-h" className="of-h2">No subscriptions. <span style={{ color: "var(--of-lime)" }}>Just tokens.</span></h2></Reveal>
+          <Reveal><p className="of-lede">1 token = $0.01 of Higgsfield API cost. Top up with UroPay direct-UPI, spend per generation, refund on failure.</p></Reveal>
+          <div className="of-packs-grid">
+            {TOKEN_PACKS.map((p, i) => (
+              <Reveal key={p.id} as="article" className={`of-card of-pack${i === 1 ? " of-tier--hot" : ""}`}>
+                {p.tag ? (
+                  <span className="of-flag of-flag--lime">{p.tag}</span>
+                ) : (
+                  <span className="of-flag">No bonus</span>
+                )}
+                <h3>{p.name}</h3>
+                <p className="of-pack-tokens">{p.tokens} <span className="of-per">tokens</span></p>
+                <p className="of-pack-price">₹{p.inr} <span>₹{(p.inr / p.tokens).toFixed(2)} / token</span></p>
+                <p className="of-blurb">{p.blurb}</p>
+                <div className="of-pack-buy">
+                  <BuyPackForm packId={p.id} label={`Buy ${p.tokens} tokens`} />
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <p className="of-pack-note"><Link href="/pricing">Full rate card + FAQ →</Link></p>
         </section>
 
         <section id="open-source" className="of-wrap of-section" aria-labelledby="oss-h">

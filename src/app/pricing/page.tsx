@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { TOKEN_PACKS } from "@/lib/credits/packs";
 import { TOKENS_PER_USD, rateCard, tokensToUsd } from "@/lib/credits/pricing";
+import { LandingNav } from "../nav";
 import { Reveal } from "../reveal";
 import "../landing.css";
 
@@ -47,20 +48,7 @@ export default function PricingPage() {
 
   return (
     <div className="of-landing">
-      <header className="of-nav">
-        <div className="of-wrap of-nav-inner">
-          <Link href="/" className="of-brand" aria-label="Openfield home">
-            <span className="of-mark" aria-hidden>○</span> Openfield
-          </Link>
-          <nav className="of-nav-links" aria-label="Primary">
-            <Link href="/#how">How it works</Link>
-            <Link href="/pricing" aria-current="page">Pricing</Link>
-            <Link href="/#open-source">Open source</Link>
-          </nav>
-          <Link href="/login" className="of-btn of-btn--ghost of-btn--nav-sign">Sign in</Link>
-          <Link href="/studio" className="of-btn of-btn--lime">Open studio →</Link>
-        </div>
-      </header>
+      <LandingNav current="pricing" />
 
       <main>
         <section className="of-wrap of-section" aria-labelledby="pricing-h" style={{ paddingTop: 72 }}>
