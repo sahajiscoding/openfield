@@ -2,13 +2,10 @@
 
 import { headers } from "next/headers";
 
-import { getModel, parseSettings } from "./catalog";
 import type { GenerationPlane } from "./catalog/types";
-import { createPlatformClient } from "./platform";
 import type { StatusResult } from "./platform";
-import { toPlatform } from "./to-platform";
-import { costForPlane } from "@/lib/credits/pricing";
-import { grantTokens, spendTokens } from "@/lib/credits/wallet";
+import { operatorClient } from "./operator";
+import { submitGenerationForUser } from "./submit";
 import { clientIpFromHeaders, enforceRateLimit } from "@/lib/rate-limit";
 import { requireSessionUser } from "@/lib/supabase/server";
 
@@ -16,17 +13,6 @@ import { requireSessionUser } from "@/lib/supabase/server";
  * Generation runs on the operator's server-side Higgsfield key (HF_API_KEY).
  * Users pay in tokens; every submit spends up front and refunds on failure.
  */
-
-function operatorClient() {
-  const apiKey = process.env.HF_API_KEY?.trim();
-  if (!apiKey) throw new Error("Generation is not configured yet — try again later.");
-  const baseUrl = (process.env.HF_API_BASE_URL?.trim() || "https://api.higgsfield.ai").replace(
-    /\/$/,
-    "",
-  );
-  // createPlatformClient validates the id:secret shape via toAuthorizationHeader.
-  return createPlatformClient({ apiKey, baseUrl });
-}
 
 async function callerKey(prefix: string): Promise<{ key: string; userId: string }> {
   const user = await requireSessionUser({ verified: true });
@@ -37,27 +23,7 @@ async function callerKey(prefix: string): Promise<{ key: string; userId: string 
 export async function submitGeneration(plane: GenerationPlane) {
   const { key, userId } = await callerKey("gen:submit");
   enforceRateLimit(key, 10, 60_000);
-  const model = getModel(plane.model);
-  const parsed: GenerationPlane = {
-    ...plane,
-    settings: parseSettings(model, plane.settings),
-  };
-  const cost = costForPlane(parsed);
-  const spendRef = `gen-${Date.now().toString(36)}-${userId.slice(0, 8)}`;
-  // Throws "Insufficient tokens" before any provider call when short.
-  await spendTokens(userId, cost, `gen:${plane.model}`, spendRef);
-  try {
-    const { path, body } = toPlatform(parsed);
-    const queued = await operatorClient().submit(path, body);
-    console.info("[gen] submitted", { userId, model: plane.model, cost, requestId: queued.requestId });
-    return queued;
-  } catch (caught) {
-    // Attempts bill on most APIs, but a failed submit refunds here: users pay
-    // only for requests the platform actually queued.
-    await grantTokens(userId, cost, "refund", `${spendRef}:refund`).catch(() => {});
-    console.error("[gen] submit failed", { userId, detail: caught instanceof Error ? caught.message : caught });
-    throw new Error("Generation failed — your tokens were refunded. Try again in a moment.");
-  }
+  return submitGenerationForUser(userId, plane);
 }
 
 /** Every request in flight, answered in one round trip. Next dispatches server
