@@ -2,23 +2,20 @@
 
 import { headers } from "next/headers";
 
+import { confirmOrderWithProvider } from "@/lib/billing/confirm";
 import { getPack } from "@/lib/credits/packs";
 import {
   attachProviderOrderSelf,
   cancelMyOrderSelf,
   createCheckoutSessionSelf,
-  findOrderByTenantRef,
+  getMyOrderSelf,
   getMyOrders,
   getTokenBalance,
-  grantTokens,
-  mapProviderStatus,
-  markOrderPaid,
-  setOrderStatus,
   type TokenOrder,
 } from "@/lib/credits/wallet";
 import { clientIpFromHeaders, enforceRateLimit } from "@/lib/rate-limit";
 import { requireSessionUser } from "@/lib/supabase/server";
-import { createUropayOrder, getUropayOrder } from "@/lib/uropay/client";
+import { createUropayOrder } from "@/lib/uropay/client";
 
 export async function getMyBalance(): Promise<number> {
   const user = await requireSessionUser();
@@ -60,7 +57,10 @@ export async function buyTokenPack(packId: string): Promise<{ openUrl: string }>
       tenantOrderRef: tenantRef,
       amountRupees: pack.inr,
       currency: "INR",
-      returnUrl: `${site}/studio/billing?ref=${encodeURIComponent(tenantRef)}`,
+      // Back to the status page for THIS order. The reference only says which
+      // order to look up — the page reads the state from our database and the
+      // provider, never from whatever the return URL happens to carry.
+      returnUrl: `${site}/billing/payment/${encodeURIComponent(tenantRef)}`,
       webhookUrl: `${site}/api/uropay/webhook`,
     });
     await attachProviderOrderSelf(tenantRef, order.id);
@@ -99,35 +99,19 @@ export async function buyTokenPack(packId: string): Promise<{ openUrl: string }>
 export type PollResult = { status: string; credited: boolean };
 
 /**
- * Poll authoritative provider status. Credits idempotently on PAID
- * (webhook is the primary path; polling covers missed/delayed webhooks).
- * NOTE: crediting (grant + mark-paid) runs on the service-role client by
- * design — moving money must stay server-verified. If THIS step 42501s while
- * checkout succeeds, the service credential (not the schema) is at fault.
+ * Poll authoritative provider status for the SIGNED-IN user's own order.
+ * Credits idempotently on PAID (the webhook is the primary path; polling
+ * covers missed/delayed webhooks).
+ *
+ * The read rides the migration-005 self lane (`get_my_order`), which filters on
+ * auth.uid() inside SQL: another user's reference simply returns no row, so
+ * there is no service-role lookup and no ownership comparison for the caller to
+ * forget. Crediting itself still runs on the service-role client — moving money
+ * must stay server-verified.
  */
 export async function pollOrderStatus(tenantRef: string): Promise<PollResult> {
   const user = await requireSessionUser();
-  const row = await findOrderByTenantRef(tenantRef);
-  if (!row || row.user_id !== user.id) throw new Error("Order not found.");
-  if (row.status === "paid") return { status: "paid", credited: true };
-  if (!row.uropay_order_id) return { status: row.status, credited: false };
-
-  const provider = await getUropayOrder(row.uropay_order_id);
-  const upper = provider.status.toUpperCase();
-  if (upper === "PAID") {
-    if (Number(provider.amount) !== Number(row.amount) || provider.currency !== row.currency) {
-      console.error("[billing] amount mismatch", { tenantRef: row.tenant_ref });
-      return { status: row.status, credited: false };
-    }
-    try {
-      await grantTokens(row.user_id, row.tokens, "uropay", `topup:${row.tenant_ref}`);
-    } catch {
-      // Unique ledger ref → duplicate delivery; confirm row and move on.
-    }
-    await markOrderPaid(row.id, row.uropay_order_id);
-    return { status: "paid", credited: true };
-  }
-  const mapped = mapProviderStatus(provider.status);
-  if (mapped !== row.status) await setOrderStatus(tenantRef, mapped).catch(() => {});
-  return { status: mapped, credited: false };
+  const row = await getMyOrderSelf(tenantRef);
+  if (!row) throw new Error("Order not found.");
+  return confirmOrderWithProvider(row, user.id);
 }

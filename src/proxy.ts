@@ -6,8 +6,36 @@ import { DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, resolveDeviceId } from "./generat
 
 /**
  * Next 16 edge entry: device minting (Vercel Blob scoping, from
- * open-higgsfield) + Supabase session refresh + /studio auth gate.
+ * open-higgsfield) + Supabase session refresh + the auth gate on gated routes.
+ *
+ * PERFORMANCE CONTRACT — the auth round trip is conditional on purpose.
+ * `supabase.auth.getUser()` is a NETWORK call to the Supabase Auth server, and
+ * this middleware sits in front of every page render. Doing it unconditionally
+ * put a round trip in front of `/`, `/pricing` and every other public page, and
+ * it was one of the hops stacked in front of `/studio`.
+ *
+ * So the check runs only where it changes the outcome:
+ *   - gated routes (`/studio/**`, `/billing/**`) — the gate itself;
+ *   - `/login` — so a signed-in visitor is forwarded into the studio instead
+ *     of being shown a dead form.
+ *
+ * Public routes keep the device cookie and nothing else. Sessions are not left
+ * un-refreshed by that: the access token is refreshed and re-cookie'd the first
+ * time a visitor crosses into a gated route (@supabase/ssr refreshes on read
+ * and this middleware writes the rotated cookies back on the response).
+ *
+ * AUTHORIZATION IS UNCHANGED — nothing here was loosened. Signed-out visitors
+ * are still bounced to /login before a gated page renders, and the pages
+ * re-check the session for themselves (fail closed twice, by design).
  */
+
+/** Route prefixes that require a signed-in, non-expired session. */
+const GATED_PREFIXES = ["/studio", "/billing"] as const;
+
+function isGated(path: string): boolean {
+  return GATED_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -15,17 +43,21 @@ export async function proxy(request: NextRequest) {
   const { deviceId, minted } = resolveDeviceId(request.cookies.get(DEVICE_COOKIE)?.value);
   if (minted) response.cookies.set(DEVICE_COOKIE, deviceId, DEVICE_COOKIE_OPTIONS);
 
-  // 2) Supabase session. Fail closed: without configured auth nobody enters
-  //    gated routes — the login page explains what env is missing.
+  const path = request.nextUrl.pathname;
+  const needsAuth = isGated(path) || path === "/login";
+
+  // 2) Public render: hand the request straight through, auth untouched.
+  if (!needsAuth) return response;
+
+  // 3) Gated render. Fail closed: without configured auth nobody enters gated
+  //    routes — the login page explains what env is missing.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  const path = request.nextUrl.pathname;
-  const isStudio = path === "/studio" || path.startsWith("/studio/");
+  const gated = isGated(path);
 
   // No auth configured: everything gated funnels to /login, which renders
   // the missing-env guidance instead of a dead form.
-  if ((!url || !anon) && isStudio) {
+  if ((!url || !anon) && gated) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.searchParams.set("next", path);
@@ -52,7 +84,7 @@ export async function proxy(request: NextRequest) {
 
   const isLogin = path === "/login";
 
-  if (isStudio && !user) {
+  if (gated && !user) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.searchParams.set("next", path);

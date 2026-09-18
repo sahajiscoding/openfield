@@ -19,6 +19,7 @@ Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfie
 - `/onboarding` — first-visit quiz (use case, referral, experience, optional DOB) before the studio
 - `/studio` — gated studio (38 Higgsfield models, live token balance in the top bar)
 - `/studio/billing` — balance, UroPay order history, per-order status
+- `/billing/payment/[tenantRef]` — server-authoritative payment status (waiting / submitted / verifying / paid / failed / expired / cancelled / not found / unavailable), self-polling
 - `/studio/security` — opt-in TOTP second factor
 
 ## Security model
@@ -27,6 +28,8 @@ Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfie
 - The single operator Higgsfield key (`HF_API_KEY`) is server-only; the browser never touches provider credentials.
 - Per-user/per-IP rate limits on submits, polls, uploads, and checkout; 256 MB upload cap; CSP + HSTS + anti-clickjacking headers.
 - UroPay webhook verifies HMAC-SHA256 + timestamp freshness + event-id replay guard, then treats `GET /v1/orders` as authoritative before crediting — idempotent on re-delivery.
+- One crediting path (`src/lib/billing/confirm.ts`) for the webhook and for status polling, idempotent on the unique ledger ref `topup:<tenant_ref>`.
+- Payment status pages decide nothing: the reference in the URL only selects an order. Ownership is enforced in SQL (`get_my_order` filters on `auth.uid()`), so another user's reference returns no row — and a provider outage reads as "we could not check", never as "payment failed".
 - `GET /auth/callback` only redirects same-origin `next` targets. CI (`.github/workflows/security.yml`) runs `npm ci`, `npm audit`, a secret scan, and typecheck.
 
 ## Setup (5 min)

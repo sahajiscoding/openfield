@@ -241,21 +241,35 @@ export function OpenHiggsfieldApp({
     if (historyLoaded) void saveHistory(history);
   }, [historyLoaded, history]);
 
-  /* The server pill above the studio owns the canonical balance; re-read it on
-     mount so a purchase (or a spend in another tab) unlocks — or locks — the
-     press without a full page reload. Fail open: an unreadable wallet never
-     blocks a paying visitor. */
+  /* The server pill above the studio owns the canonical balance. This used to
+     re-read it on mount for every visit — a Server Action POST (session read +
+     wallet read) racing the hydration of the studio the visitor had just
+     waited for, to fetch a number the server had rendered a moment earlier.
+
+     So: read on mount only when the server did NOT supply a balance (an
+     unknown wallet still has to be resolved before a press is judged), and
+     otherwise wait for the tab to come back — which is exactly the moment a
+     purchase made in another tab needs to unlock this one. Fail open: an
+     unreadable wallet never blocks a paying visitor. */
   useEffect(() => {
     let live = true;
-    void getMyBalance()
-      .then((value) => {
-        if (live) setBalance(value);
-      })
-      .catch(() => {});
+    const read = () => {
+      void getMyBalance()
+        .then((value) => {
+          if (live) setBalance(value);
+        })
+        .catch(() => {});
+    };
+    if (initialBalance === null || initialBalance === undefined) read();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") read();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       live = false;
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+  }, [initialBalance]);
 
   useEffect(() => {
     alive.current = true;

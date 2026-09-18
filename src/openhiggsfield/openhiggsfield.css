@@ -1065,12 +1065,21 @@
 
 /* Nothing is drawn behind this: the studio's ground is black, and a scope with
    no runs should read as unexposed rather than as scenery. Weight comes from
-   the type and from three real prompts. */
+   the type and from three real prompts.
+
+   The copy sits at the TOP of the empty field, not centred in it: the gallery
+   is the tallest thing on the page, and centring the starter copy in it pushed
+   the studio's own workspace ~190px down the screen on a 1366×768 laptop and
+   left the middle of the page blank. Anchored here it begins immediately under
+   the scope bar, and the breathing room falls below the copy — behind the
+   floating composer, where empty ground belongs. The clamp keeps that first
+   gap from growing without bound on a tall display. */
 .ohf-empty {
   min-height: 100%;
   display: grid;
-  place-items: center;
-  padding: 4px 0 20px;
+  align-content: start;
+  justify-items: center;
+  padding: clamp(6px, 4vh, 40px) 0 20px;
 }
 .ohf-empty-copy {
   display: flex;
@@ -3686,6 +3695,21 @@ a.ohf-btn-solid {
   .ohf-selact {
     height: 40px;
     min-width: 40px;
+  }
+}
+
+/* Short viewports (1366×768 laptops, browser chrome included) get the vertical
+   budget back from the chrome rather than from the controls: a slightly
+   smaller fade under the bar and a tighter dock leave the whole generation
+   rail — prompt, model, settings, Generate — above the fold as one piece. */
+@media (max-height: 800px) {
+  .ohf-gallery {
+    --ohf-fade: 56px;
+    padding-top: 64px;
+  }
+  .ohf-dock {
+    padding-top: 8px;
+    padding-bottom: 14px;
   }
 }
 

@@ -1,0 +1,307 @@
+/* Payment status screen — the existing Openfield language, one centered card.
+   Uses the shared tokens from base.css (void / bone / smoke / lime) and the
+   shared .of-btn from landing.css: no new palette, no new type, no new motion
+   vocabulary. Scoped under .of-pay so nothing here can reach the studio or the
+   marketing pages. */
+
+.of-pay {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 20px 56px;
+}
+
+.of-pay-head {
+  width: min(1160px, 100%);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.of-pay-head-link {
+  color: var(--of-smoke);
+  font-size: 13.5px;
+  text-decoration: none;
+}
+
+.of-pay-head-link:hover {
+  color: var(--of-bone);
+}
+
+.of-pay-main {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: 26px 0 0;
+}
+
+.of-pay-card {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 34px 32px 28px;
+  border: 1px solid var(--of-line);
+  border-radius: 22px;
+  background:
+    radial-gradient(520px 200px at 50% -12%, rgba(212, 249, 33, 0.07), transparent 70%),
+    linear-gradient(180deg, rgba(237, 234, 224, 0.04), rgba(237, 234, 224, 0.01)),
+    var(--of-panel);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+/* ── status mark ─────────────────────────────────────────────
+   Shape first, words second, tint third — the tone is never the only thing
+   telling a visitor where they stand. */
+
+.of-pay-icon {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--of-line);
+  background: rgba(237, 234, 224, 0.035);
+  color: var(--of-bone);
+}
+
+.of-pay-icon[data-tone="positive"] {
+  color: var(--of-lime);
+  border-color: rgba(212, 249, 33, 0.42);
+  background: rgba(212, 249, 33, 0.08);
+}
+
+.of-pay-icon[data-tone="negative"] {
+  color: var(--of-danger);
+  border-color: rgba(255, 107, 94, 0.36);
+  background: rgba(255, 107, 94, 0.07);
+}
+
+.of-pay-spinner {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(237, 234, 224, 0.16);
+  border-top-color: var(--of-lime);
+  animation: of-pay-spin 0.9s linear infinite;
+}
+
+@keyframes of-pay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.of-pay-kicker {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--of-lime);
+}
+
+.of-pay-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(24px, 3.4vw, 32px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.of-pay-body {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--of-smoke);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.of-pay-checks {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  width: 100%;
+  max-width: 330px;
+  display: grid;
+  gap: 7px;
+  text-align: left;
+}
+
+.of-pay-checks li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  color: var(--of-bone);
+}
+
+.of-pay-checks svg {
+  color: var(--of-lime);
+  flex: none;
+}
+
+/* ── order facts ──────────────────────────────────────────── */
+
+.of-pay-facts {
+  width: 100%;
+  margin: 14px 0 2px;
+  border: 1px solid var(--of-line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(237, 234, 224, 0.02);
+}
+
+.of-pay-facts > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--of-line);
+}
+
+.of-pay-facts > div:last-child {
+  border-bottom: none;
+}
+
+.of-pay-facts dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--of-smoke);
+}
+
+.of-pay-facts dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--of-bone);
+  font-variant-numeric: tabular-nums;
+}
+
+.of-pay-ref {
+  font-family: ui-monospace, "JetBrains Mono", monospace;
+  font-size: 12.5px;
+  font-weight: 500;
+  word-break: break-all;
+  text-align: right;
+}
+
+.of-pay-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--of-line);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--of-smoke);
+}
+
+.of-pay-pill[data-state="paid"] {
+  color: var(--of-lime);
+  border-color: rgba(212, 249, 33, 0.4);
+  background: rgba(212, 249, 33, 0.08);
+}
+
+.of-pay-pill[data-state="failed"] {
+  color: var(--of-danger);
+  border-color: rgba(255, 107, 94, 0.34);
+  background: rgba(255, 107, 94, 0.07);
+}
+
+/* ── notices: the "we could not check" distinction ────────── */
+
+.of-pay-notice-slot {
+  width: 100%;
+}
+
+.of-pay-notice {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--of-line);
+  border-radius: 12px;
+  background: rgba(237, 234, 224, 0.03);
+  color: var(--of-smoke);
+  font-size: 13.5px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.of-pay-notice strong {
+  color: var(--of-bone);
+  font-weight: 600;
+}
+
+.of-pay-notice[data-tone="negative"] {
+  border-color: rgba(255, 107, 94, 0.32);
+  background: rgba(255, 107, 94, 0.06);
+  color: #ffd9d3;
+}
+
+.of-pay-notice a {
+  color: var(--of-lime);
+  font-weight: 600;
+}
+
+/* ── actions ──────────────────────────────────────────────── */
+
+.of-pay-actions {
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.of-pay-actions .of-btn {
+  justify-content: center;
+}
+
+.of-pay-foot {
+  margin: 16px 0 0;
+  color: var(--of-smoke);
+  font-size: 12.5px;
+}
+
+.of-pay-help {
+  margin: 22px 0 0;
+  text-align: center;
+  color: var(--of-smoke);
+  font-size: 13px;
+}
+
+.of-pay-help a {
+  color: var(--of-bone);
+}
+
+@media (max-width: 560px) {
+  .of-pay {
+    padding: 16px 14px 40px;
+  }
+
+  .of-pay-card {
+    padding: 26px 18px 22px;
+    border-radius: 18px;
+  }
+
+  .of-pay-actions {
+    flex-direction: column;
+  }
+
+  .of-pay-actions .of-btn {
+    width: 100%;
+  }
+}
