@@ -31,7 +31,7 @@ Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfie
 - UroPay webhook verifies HMAC-SHA256 + timestamp freshness + event-id replay guard, then treats `GET /v1/orders` as authoritative before crediting — idempotent on re-delivery.
 - One crediting path (`src/lib/billing/confirm.ts`) for the webhook and for status polling, idempotent on the unique ledger ref `topup:<tenant_ref>`.
 - Payment status pages decide nothing: the reference in the URL only selects an order. Ownership is enforced in SQL (`get_my_order` filters on `auth.uid()`), so another user's reference returns no row — and a provider outage reads as "we could not check", never as "payment failed".
-- `GET /auth/callback` only redirects same-origin `next` targets. CI (`.github/workflows/security.yml`) runs `npm ci`, `npm audit`, a secret scan, and typecheck.
+- `GET /auth/callback` only redirects same-origin `next` targets. CI (`.github/workflows/security.yml`) runs `npm ci`, `npm audit`, a secret scan, typecheck, and migration filename validation.
 
 ## Setup (5 min)
 
@@ -45,7 +45,7 @@ Fill `.env.local` (same vars go in Vercel → Project → Settings → Environme
 
 1. **Supabase** (sign-in + billing): [supabase.com](https://supabase.com) → new project → Settings → API → `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` (server-only, powers wallets/ledger). Run `supabase/migrations/001_generations.sql` then `002_credits.sql` in SQL Editor. Auth → URL Configuration → Redirect to `http://localhost:3000/auth/callback` (+ your Vercel URL later). Enable Google provider optionally.
 2. **Higgsfield operator key**: `HF_API_KEY=id:secret` (server-only, from the Higgsfield team / console). `HF_API_BASE_URL` defaults to `https://api.higgsfield.ai`.
-3. **UroPay** (hosted checkout, same scheme as MUN-AI-APP): `UROPAY_API_KEY` + `UROPAY_API_SECRET` + `UROPAY_WEBHOOK_SECRET` from the UroPay dashboard (server-only). Run `003_uropay_qr.sql` and `005_billing_hardening.sql` after `002`. Set the dashboard webhook URL to `https://<your-app>.vercel.app/api/uropay/webhook`.
+3. **UroPay** (hosted checkout, same scheme as MUN-AI-APP): `UROPAY_API_KEY` + `UROPAY_API_SECRET` + `UROPAY_WEBHOOK_SECRET` from the UroPay dashboard (server-only). Apply the migrations in `supabase/migrations/` in version order. The UroPay and billing-hardening migrations use the timestamp versions already recorded by the database; do not rename or renumber applied migrations. Set the dashboard webhook URL to `https://<your-app>.vercel.app/api/uropay/webhook`.
 4. **Uploads**: reference frames go to the Supabase Storage bucket `openfield-uploads` (created public by migration 001) — no extra env needed.
 5. **MCP generation**: visit `/mcp` for the public setup guide. `openfield_models` and `openfield_pricing` are read-only. `openfield_generate` calculates the request cost, checks the user's wallet, atomically deducts the required tokens, and only then starts the official Higgsfield request; failed submits are refunded.
 
