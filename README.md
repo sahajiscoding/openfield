@@ -41,7 +41,7 @@ Fill `.env.local` (same vars go in Vercel → Project → Settings → Environme
 
 1. **Supabase** (sign-in + billing): [supabase.com](https://supabase.com) → new project → Settings → API → `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` (server-only, powers wallets/ledger). Run `supabase/migrations/001_generations.sql` then `002_credits.sql` in SQL Editor. Auth → URL Configuration → Redirect to `http://localhost:3000/auth/callback` (+ your Vercel URL later). Enable Google provider optionally.
 2. **Higgsfield operator key**: `HF_API_KEY=id:secret` (server-only, from the Higgsfield team / console). `HF_API_BASE_URL` defaults to `https://api.higgsfield.ai`.
-3. **UroPay** (direct-UPI QR, no aggregator): `UROPAY_API_KEY` + `UROPAY_API_SECRET` from https://app.uropay.me → API KEYS (server-only). TEST vs PRODUCTION is switched on the device in the dashboard. Keep the companion Android app running on the SMS phone. Run `003_uropay_qr.sql` after `002`. Set the dashboard webhook URL to `https://<your-app>.vercel.app/api/uropay/webhook`.
+3. **UroPay** (hosted checkout, same scheme as MUN-AI-APP): `UROPAY_API_KEY` + `UROPAY_API_SECRET` + `UROPAY_WEBHOOK_SECRET` from the UroPay dashboard (server-only). Run `003_uropay_qr.sql` and `005_billing_hardening.sql` after `002`. Set the dashboard webhook URL to `https://<your-app>.vercel.app/api/uropay/webhook`.
 4. **Uploads**: reference frames go to the Supabase Storage bucket `openfield-uploads` (created public by migration 001) — no extra env needed.
 
 ```bash
@@ -54,7 +54,7 @@ npm run build && npm run start
 2. Env vars: same as `.env.example` (only `NEXT_PUBLIC_*` reach the browser).
 3. Supabase → Auth → Redirect URLs: add `https://<your-app>.vercel.app/auth/callback`.
 4. UroPay dashboard → webhook URL: `https://<your-app>.vercel.app/api/uropay/webhook`.
-5. Demo script for the QT: sign in → buy Starter pack (TEST device, scan QR with any UPI app, paste UTR) → Seedance 2.5 720p → watch 260 tokens spend → order lands in `/studio/billing`.
+5. Demo script for the QT: sign in → buy Starter pack on the hosted checkout → Seedance 2.5 720p → watch 260 tokens spend → order lands in `/studio/billing`.
 
 ## Design ($10K checklist)
 

@@ -1,23 +1,20 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 /**
- * UroPay QR flow (https://api.uropay.me).
+ * UroPay hosted-checkout API (https://api.uropai.in).
  *
- * UroPay is NOT an aggregator / hosted checkout. It generates a UPI QR for a
- * direct-to-merchant VPA payment; the companion Android app reads the UPI
- * credit SMS and fires webhooks. No cards, netbanking, wallets or EMI.
+ * Mirrors the proven MUN-AI-APP integration (same operator account family):
+ * HMAC-signed requests, whole-rupee amounts, hosted openUrl checkout.
  *
- * Flow: POST /order/generate → customer pays in any UPI app → customer pastes
- * the 12-digit UTR → PATCH /order/update → poll GET /order/status/:id →
- * webhook confirms COMPLETED (or REVIEW_REQUIRED after ~2 min without SMS).
+ * Flow: POST /v1/orders → redirect customer to openUrl → provider fires the
+ * tenant webhook on status change → GET /v1/orders/:id is authoritative.
  *
- * Server-only: API secret never leaves server env. The status endpoint needs
- * no auth header per docs and may be called client-side via our own API.
+ * Server-only: API + webhook secrets never leave server env.
  */
 
-const BASE_URL = (process.env.UROPAY_BASE_URL ?? "https://api.uropay.me").replace(/\/$/, "");
+const BASE_URL = (process.env.UROPAY_BASE_URL ?? "https://api.uropai.in").replace(/\/$/, "");
 
-function creds(): { key: string; secret: string; hashedSecret: string } {
+function creds(): { key: string; secret: string } {
   const key = process.env.UROPAY_API_KEY?.trim();
   const secret = process.env.UROPAY_API_SECRET?.trim();
   if (!key || !secret) {
@@ -25,327 +22,196 @@ function creds(): { key: string; secret: string; hashedSecret: string } {
       "Payments are not configured yet — the operator must add UROPAY_API_KEY / UROPAY_API_SECRET in Vercel.",
     );
   }
-  // Docs: Authorization: Bearer sha512(plain secret hex). Never send plain secret.
-  const hashedSecret = createHash("sha512").update(secret).digest("hex");
-  return { key, secret, hashedSecret };
+  return { key, secret };
 }
 
-export function uropaySecret(): string {
-  return creds().secret;
+function webhookSecret(): string {
+  const secret = process.env.UROPAY_WEBHOOK_SECRET?.trim();
+  if (!secret) {
+    throw new Error(
+      "Payments are not configured yet — the operator must add UROPAY_WEBHOOK_SECRET in Vercel.",
+    );
+  }
+  return secret;
 }
 
-function authHeaders(): Record<string, string> {
-  const { key, hashedSecret } = creds();
+/** HMAC-SHA256 over METHOD, path, timestamp, nonce, query, body (MUN parity). */
+function signedHeaders(
+  method: string,
+  path: string,
+  query: string,
+  rawBody: string,
+): Record<string, string> {
+  const { key, secret } = creds();
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const nonce = randomUUID();
+  const canonical = [method, path, timestamp, nonce, query, rawBody].join("\n");
+  const signature = createHmac("sha256", secret).update(canonical).digest("hex");
   return {
+    "X-Api-Key": key,
+    "X-Timestamp": timestamp,
+    "X-Nonce": nonce,
+    "X-Signature": signature,
     "Content-Type": "application/json",
-    Accept: "application/json",
-    "X-API-KEY": key,
-    Authorization: `Bearer ${hashedSecret}`,
   };
 }
 
-function optionalVpa(): { vpa?: string; vpaName?: string } {
-  const vpa = process.env.UROPAY_VPA?.trim();
-  const vpaName = process.env.UROPAY_VPA_NAME?.trim();
-  return {
-    ...(vpa ? { vpa } : {}),
-    ...(vpaName ? { vpaName } : {}),
+export type UropayOrder = {
+  id: string;
+  tenantOrderRef: string;
+  status: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "CANCELLED";
+  amount: number;
+  currency: string;
+  openUrl?: string;
+  createdAt?: string;
+};
+
+/** UroPay expects whole rupees (₹199 → 199, NOT paise). */
+export async function createUropayOrder(input: {
+  tenantOrderRef: string;
+  amountRupees: number;
+  currency: string;
+  returnUrl?: string;
+  webhookUrl?: string;
+}): Promise<UropayOrder> {
+  if (!Number.isInteger(input.amountRupees) || input.amountRupees <= 0) {
+    throw new Error("Invalid payment amount.");
+  }
+  const path = "/v1/orders";
+  const body: Record<string, unknown> = {
+    tenantOrderRef: input.tenantOrderRef,
+    amount: input.amountRupees,
+    currency: input.currency,
+    ...(input.returnUrl ? { returnUrl: input.returnUrl } : {}),
+    ...(input.webhookUrl ? { webhookUrl: input.webhookUrl } : {}),
   };
-}
-
-// ---------- order endpoints ----------
-
-export type UropayGenerateData = {
-  uroPayOrderId: string;
-  orderStatus: string;
-  upiString: string;
-  qrCode: string;
-  amountInRupees: string;
-};
-
-export async function generateUropayOrder(input: {
-  amountPaise: number;
-  merchantOrderId: string;
-  customerName: string;
-  customerEmail: string;
-  transactionNote?: string;
-  notes?: Record<string, string>;
-}): Promise<UropayGenerateData> {
-  const body = JSON.stringify({
-    ...optionalVpa(),
-    amount: input.amountPaise,
-    merchantOrderId: input.merchantOrderId,
-    customerName: input.customerName,
-    customerEmail: input.customerEmail,
-    ...(input.transactionNote ? { transactionNote: input.transactionNote } : {}),
-    ...(input.notes ? { notes: input.notes } : {}),
-  });
-  const res = await fetch(`${BASE_URL}/order/generate`, {
-    method: "POST",
-    headers: authHeaders(),
-    body,
-  });
-  const json = (await res.json().catch(() => null)) as {
-    code?: number;
-    status?: string;
-    message?: string;
-    data?: UropayGenerateData;
-  } | null;
-  if (!res.ok || !json || json.status !== "success" || !json.data?.uroPayOrderId) {
-    throw new Error(
-      `UroPay order failed (${res.status}): ${(json?.message ?? "unknown").slice(0, 200)}`,
-    );
-  }
-  return json.data;
-}
-
-export type UropayUpdateData = {
-  uroPayOrderId: string;
-  orderStatus: string;
-};
-
-export async function updateUropayOrder(input: {
-  uroPayOrderId: string;
-  referenceNumber: string;
-}): Promise<UropayUpdateData> {
-  const body = JSON.stringify({
-    uroPayOrderId: input.uroPayOrderId,
-    referenceNumber: input.referenceNumber,
-  });
-  const res = await fetch(`${BASE_URL}/order/update`, {
-    method: "PATCH",
-    headers: authHeaders(),
-    body,
-  });
-  const json = (await res.json().catch(() => null)) as {
-    code?: number;
-    status?: string;
-    message?: string;
-    data?: UropayUpdateData;
-  } | null;
-  if (!res.ok || !json || json.status !== "success" || !json.data?.uroPayOrderId) {
-    throw new Error(
-      `UroPay UTR update failed (${res.status}): ${(json?.message ?? "unknown").slice(0, 200)}`,
-    );
-  }
-  return json.data;
-}
-
-export type UropayStatusData = {
-  uroPayOrderId: string;
-  orderStatus: string;
-};
-
-/** Authoritative status. Per docs no auth header is required (pollable). */
-export async function getUropayOrderStatus(uroPayOrderId: string): Promise<UropayStatusData> {
-  const res = await fetch(`${BASE_URL}/order/status/${encodeURIComponent(uroPayOrderId)}`, {
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    cache: "no-store",
-  });
-  const json = (await res.json().catch(() => null)) as {
-    code?: number;
-    status?: string;
-    message?: string;
-    data?: UropayStatusData;
-  } | null;
-  if (!res.ok || !json || json.status !== "success" || !json.data?.orderStatus) {
-    throw new Error(
-      `UroPay status failed (${res.status}): ${(json?.message ?? "unknown").slice(0, 200)}`,
-    );
-  }
-  return json.data;
-}
-
-// ---------- review queue (UTR fraud prevention) ----------
-
-async function authedJson(path: string, method: string, body?: string) {
+  const rawBody = JSON.stringify(body);
   const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers: authHeaders(),
-    ...(body ? { body } : {}),
+    method: "POST",
+    headers: signedHeaders("POST", path, "", rawBody),
+    body: rawBody,
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
   });
   const json = (await res.json().catch(() => null)) as {
-    code?: number;
-    status?: string;
-    message?: string;
-    data?: unknown;
+    message?: unknown;
+    error?: unknown;
+    data?: UropayOrder | null;
   } | null;
-  if (!res.ok || !json || json.status !== "success") {
-    throw new Error(
-      `UroPay review failed (${res.status}): ${(json?.message ?? "unknown").slice(0, 200)}`,
-    );
+  if (!res.ok) {
+    const detail =
+      (typeof json?.message === "string" && json.message) ||
+      (typeof json?.error === "string" && json.error) ||
+      `UroPay order creation failed (${res.status}).`;
+    throw new Error(`UroPay order failed (${res.status}): ${detail.slice(0, 200)}`);
+  }
+  if (!json?.data?.id || !json.data.openUrl) {
+    throw new Error("UroPay response did not contain an order ID and checkout URL.");
   }
   return json.data;
 }
 
-export function listReviewOrders(): Promise<unknown> {
-  return authedJson("/order/review", "GET");
+/** Authoritative status — webhooks are advisory; this is truth. */
+export async function getUropayOrder(orderId: string): Promise<UropayOrder> {
+  if (!orderId) throw new Error("UroPay order ID is required.");
+  const path = `/v1/orders/${encodeURIComponent(orderId)}`;
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: signedHeaders("GET", path, "", ""),
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
+  });
+  const json = (await res.json().catch(() => null)) as {
+    message?: unknown;
+    error?: unknown;
+    data?: UropayOrder | null;
+  } | null;
+  if (!res.ok) {
+    const detail =
+      (typeof json?.message === "string" && json.message) ||
+      (typeof json?.error === "string" && json.error) ||
+      `UroPay status lookup failed (${res.status}).`;
+    throw new Error(`UroPay status failed (${res.status}): ${detail.slice(0, 200)}`);
+  }
+  if (!json?.data) throw new Error("UroPay status response was invalid.");
+  return json.data;
 }
 
-export function approveReviewOrder(id: string): Promise<unknown> {
-  return authedJson(`/order/review/${encodeURIComponent(id)}/approve`, "POST", "{}");
-}
+export type UropayWebhookEvent = {
+  eventId: string;
+  orderId: string;
+  tenantOrderRef: string;
+  status: string;
+  amountCaptured: number | null;
+  currency: string;
+  environment: string;
+};
 
-export function rejectReviewOrder(id: string): Promise<unknown> {
-  return authedJson(`/order/review/${encodeURIComponent(id)}/reject`, "POST", "{}");
-}
+/**
+ * Verify an inbound tenant webhook. Signed with the SEPARATE webhook secret
+ * over POST /tenant-webhook + empty query + the RAW body bytes; enforce the
+ * 5-minute replay window and compare in constant time (MUN parity).
+ */
+export function verifyUropayWebhook(headers: Headers, rawBody: string): UropayWebhookEvent {
+  const secret = webhookSecret();
+  const timestamp = headers.get("x-timestamp") ?? "";
+  const nonce = headers.get("x-nonce") ?? "";
+  const signature = headers.get("x-signature") ?? "";
+  if (!timestamp || !nonce || !signature) throw new Error("Missing webhook signature headers.");
 
-// ---------- webhook verification ----------
-//
-// Signature: hex(HMAC-SHA256(key=sha512(secret_hex), data=raw JSON bytes)).
-// Key ORDER matters — reconstruct in the documented order before hashing.
-// Three cases by event: companion.sms.data → Case 1; order.status.utrsubmitted
-// → Case 2b; any other order-status event → Case 2a.
+  const ts = Number(timestamp);
+  const now = Math.floor(Date.now() / 1000);
+  if (!Number.isFinite(ts) || ts <= 0 || Math.abs(now - ts) > 300) {
+    throw new Error("Stale webhook timestamp.");
+  }
 
-const FIXED_TAIL = ["uroPayOrderId", "merchantOrderId", "detectedAt", "environment"] as const;
+  const canonical = ["POST", "/tenant-webhook", timestamp, nonce, "", rawBody].join("\n");
+  const expected = createHmac("sha256", secret).update(canonical).digest("hex");
+  let a: Buffer;
+  let b: Buffer;
+  try {
+    a = Buffer.from(signature, "hex");
+    b = Buffer.from(expected, "hex");
+  } catch {
+    throw new Error("Invalid webhook signature.");
+  }
+  if (a.length === 0 || a.length !== b.length || !timingSafeEqual(a, b)) {
+    throw new Error("Invalid webhook signature.");
+  }
 
-function buildTransactionPayload(payload: Record<string, unknown>): Record<string, unknown> {
-  const fixedSet = new Set<string>([...FIXED_TAIL, "event"]);
-  const ordered: Record<string, unknown> = {};
-  if ("event" in payload) ordered.event = payload.event;
-  const middle = Object.keys(payload)
-    .filter((k) => !fixedSet.has(k))
-    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  for (const k of middle) ordered[k] = payload[k];
-  for (const k of FIXED_TAIL) ordered[k] = (payload as Record<string, unknown>)[k] ?? null;
-  return ordered;
-}
-
-function buildOrderStatusPayload(payload: Record<string, unknown>): Record<string, unknown> {
-  return {
-    event: payload.event,
-    uroPayOrderId: payload.uroPayOrderId,
-    merchantOrderId: payload.merchantOrderId,
-    orderStatus: payload.orderStatus,
-    submittedUTR: (payload.submittedUTR ?? null) as unknown,
-    environment: payload.environment,
+  const payload = JSON.parse(rawBody) as {
+    eventId?: unknown;
+    orderId?: unknown;
+    tenantOrderRef?: unknown;
+    status?: unknown;
+    amount_captured?: unknown;
+    currency?: unknown;
+    environment?: unknown;
   };
-}
-
-function buildUtrSubmittedPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  if (
+    typeof payload.eventId !== "string" ||
+    !payload.eventId.trim() ||
+    typeof payload.orderId !== "string" ||
+    !payload.orderId.trim() ||
+    typeof payload.tenantOrderRef !== "string" ||
+    !payload.tenantOrderRef.trim() ||
+    typeof payload.status !== "string" ||
+    !payload.status.trim()
+  ) {
+    throw new Error("Malformed webhook payload.");
+  }
+  const amountCaptured =
+    payload.amount_captured === null ||
+    payload.amount_captured === undefined ||
+    payload.amount_captured === ""
+      ? null
+      : Number(payload.amount_captured);
   return {
-    event: payload.event,
-    uroPayOrderId: payload.uroPayOrderId,
-    merchantOrderId: payload.merchantOrderId,
-    orderStatus: payload.orderStatus,
-    submittedUTR: (payload.submittedUTR ?? null) as unknown,
-    amount: payload.amount,
-    customerName: payload.customerName,
-    customerEmail: payload.customerEmail,
-    customerVPA: (payload.customerVPA ?? null) as unknown,
-    environment: payload.environment,
-    utrSubmittedAt: (payload.utrSubmittedAt ?? null) as unknown,
+    eventId: payload.eventId.trim(),
+    orderId: payload.orderId.trim(),
+    tenantOrderRef: payload.tenantOrderRef.trim(),
+    status: payload.status.trim(),
+    amountCaptured: amountCaptured !== null && Number.isFinite(amountCaptured) ? amountCaptured : null,
+    currency: typeof payload.currency === "string" ? payload.currency : "",
+    environment: typeof payload.environment === "string" ? payload.environment : "",
   };
-}
-
-function orderedForVerify(payload: Record<string, unknown>): Record<string, unknown> {
-  if (payload.event === "order.status.utrsubmitted") return buildUtrSubmittedPayload(payload);
-  if ("orderStatus" in payload) return buildOrderStatusPayload(payload);
-  return buildTransactionPayload(payload);
-}
-
-export function verifyUropaySignature(
-  payload: Record<string, unknown>,
-  secret: string,
-  signature: string,
-): boolean {
-  const ordered = orderedForVerify(payload);
-  const hashedSecret = createHash("sha512").update(secret).digest("hex");
-  const raw = JSON.stringify(ordered);
-  const computed = createHmac("sha256", hashedSecret).update(raw).digest("hex");
-  const a = Buffer.from(signature.trim().toLowerCase(), "utf8");
-  const b = Buffer.from(computed.toLowerCase(), "utf8");
-  if (a.length !== b.length || a.length === 0) return false;
-  return timingSafeEqual(a, b);
-}
-
-export type UropayWebhook =
-  | {
-      kind: "sms";
-      event: "companion.sms.data";
-      amount: string | null;
-      referenceNumber: string | null;
-      from: string | null;
-      vpa: string | null;
-      uroPayOrderId: string | null;
-      merchantOrderId: string | null;
-      detectedAt: string | null;
-      environment: string;
-    }
-  | {
-      kind: "utr_submitted";
-      event: "order.status.utrsubmitted";
-      uroPayOrderId: string;
-      merchantOrderId: string;
-      orderStatus: string;
-      submittedUTR: string | null;
-      amount: number | null;
-      customerName: string | null;
-      customerEmail: string | null;
-      customerVPA: string | null;
-      environment: string;
-      utrSubmittedAt: string | null;
-    }
-  | {
-      kind: "status_changed";
-      event: string;
-      uroPayOrderId: string;
-      merchantOrderId: string;
-      orderStatus: string;
-      submittedUTR: string | null;
-      environment: string;
-    };
-
-function str(v: unknown): string | null {
-  return typeof v === "string" && v ? v : null;
-}
-
-/** Parse after signature verification. Throws on malformed payloads. */
-export function parseUropayWebhook(payload: Record<string, unknown>): UropayWebhook {
-  const event = typeof payload.event === "string" ? payload.event : "";
-  if (event === "companion.sms.data") {
-    return {
-      kind: "sms",
-      event,
-      amount: str(payload.amount),
-      referenceNumber: str(payload.referenceNumber),
-      from: str(payload.from),
-      vpa: str(payload.vpa),
-      uroPayOrderId: str(payload.uroPayOrderId),
-      merchantOrderId: str(payload.merchantOrderId),
-      detectedAt: str(payload.detectedAt),
-      environment: typeof payload.environment === "string" ? payload.environment : "",
-    };
-  }
-  if (event === "order.status.utrsubmitted") {
-    if (typeof payload.uroPayOrderId !== "string" || typeof payload.merchantOrderId !== "string") {
-      throw new Error("Malformed UTR-submitted webhook.");
-    }
-    return {
-      kind: "utr_submitted",
-      event,
-      uroPayOrderId: payload.uroPayOrderId,
-      merchantOrderId: payload.merchantOrderId,
-      orderStatus: typeof payload.orderStatus === "string" ? payload.orderStatus : "",
-      submittedUTR: str(payload.submittedUTR),
-      amount: typeof payload.amount === "number" ? payload.amount : null,
-      customerName: str(payload.customerName),
-      customerEmail: str(payload.customerEmail),
-      customerVPA: str(payload.customerVPA),
-      environment: typeof payload.environment === "string" ? payload.environment : "",
-      utrSubmittedAt: str(payload.utrSubmittedAt),
-    };
-  }
-  if (typeof payload.uroPayOrderId === "string" && typeof payload.merchantOrderId === "string") {
-    return {
-      kind: "status_changed",
-      event: event || "order.status.changed",
-      uroPayOrderId: payload.uroPayOrderId,
-      merchantOrderId: payload.merchantOrderId,
-      orderStatus: typeof payload.orderStatus === "string" ? payload.orderStatus : "",
-      submittedUTR: str(payload.submittedUTR),
-      environment: typeof payload.environment === "string" ? payload.environment : "",
-    };
-  }
-  throw new Error("Malformed webhook payload.");
 }

@@ -312,9 +312,10 @@ export async function attachProviderOrder(tenantRef: string, uropayOrderId: stri
 
 const UPDATABLE = new Set(["pending", "utr_submitted", "review", "paid", "failed", "expired", "cancelled"]);
 
-/** UroPay provider status → our row status. */
+/** UroPay provider status → our row status (hosted /v1/orders vocabulary). */
 export function mapProviderStatus(provider: string): string {
   switch (provider.toUpperCase()) {
+    case "PAID":
     case "COMPLETED":
       return "paid";
     case "FAILED":
@@ -323,6 +324,10 @@ export function mapProviderStatus(provider: string): string {
       return "expired";
     case "CANCELLED":
       return "cancelled";
+    case "PENDING":
+    case "CREATED":
+    case "UPDATED":
+      return "pending";
     case "REVIEW_REQUIRED":
       return "review";
     case "UTR_SUBMITTED":
