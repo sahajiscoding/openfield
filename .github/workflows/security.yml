@@ -38,7 +38,9 @@ jobs:
             exit 1
           fi
           # No private keys or provider tokens in tracked code/docs-code.
-          if git grep -nE 'BEGIN [A-Z ]*PRIVATE KEY|sk-live-[A-Za-z0-9]+|AKIA[0-9A-Z]{16}|xox[bpas]-[A-Za-z0-9-]+|SUPABASE_SERVICE_ROLE_KEY=[^[:space:]`]+|HF_API_KEY=[^[:space:]`]+|UROPAY_API_SECRET=[^[:space:]`]+|OPEN_HIGGSFIELD_READ_WRITE_TOKEN=[^[:space:]`]+' -- . ':!*.md' ':!.env.example' ':!package-lock.json'; then
+          # This workflow file itself is excluded: the patterns below would
+          # otherwise match their own literal text (e.g. `HF_API_KEY=[`).
+          if git grep -nE 'BEGIN [A-Z ]*PRIVATE KEY|sk-live-[A-Za-z0-9]+|AKIA[0-9A-Z]{16}|xox[bpas]-[A-Za-z0-9-]+|SUPABASE_SERVICE_ROLE_KEY=[^[:space:]`]+|HF_API_KEY=[^[:space:]`]+|UROPAY_API_SECRET=[^[:space:]`]+|OPEN_HIGGSFIELD_READ_WRITE_TOKEN=[^[:space:]`]+' -- . ':!*.md' ':!.env.example' ':!package-lock.json' ':!.github/workflows/security.yml'; then
             echo "::error::Possible secret committed — rotate it and remove."
             exit 1
           fi
