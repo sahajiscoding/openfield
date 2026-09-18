@@ -47,6 +47,7 @@ Fill `.env.local` (same vars go in Vercel → Project → Settings → Environme
 2. **Higgsfield operator key**: `HF_API_KEY=id:secret` (server-only, from the Higgsfield team / console). `HF_API_BASE_URL` defaults to `https://api.higgsfield.ai`.
 3. **UroPay** (hosted checkout, same scheme as MUN-AI-APP): `UROPAY_API_KEY` + `UROPAY_API_SECRET` + `UROPAY_WEBHOOK_SECRET` from the UroPay dashboard (server-only). Run `003_uropay_qr.sql` and `005_billing_hardening.sql` after `002`. Set the dashboard webhook URL to `https://<your-app>.vercel.app/api/uropay/webhook`.
 4. **Uploads**: reference frames go to the Supabase Storage bucket `openfield-uploads` (created public by migration 001) — no extra env needed.
+5. **MCP generation**: visit `/mcp` for the public setup guide. `openfield_models` and `openfield_pricing` are read-only. `openfield_generate` calculates the request cost, checks the user's wallet, atomically deducts the required tokens, and only then starts the official Higgsfield request; failed submits are refunded.
 
 ```bash
 npm run build && npm run start
