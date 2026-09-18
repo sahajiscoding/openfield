@@ -22,6 +22,7 @@ export function LandingNav({ current }: { current?: "pricing" }) {
           <Link href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>
             Pricing
           </Link>
+          <Link href="/studio/mcp">MCP</Link>
         </nav>
         <Link href="/login" className="of-btn of-btn--ghost of-btn--nav-sign">
           Sign in
