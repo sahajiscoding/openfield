@@ -4,8 +4,8 @@ import Link from "next/link";
 import { LandingNav } from "../nav";
 import { Reveal } from "../reveal";
 import "../landing.css";
-import "../studio/mcp/mcp.css";
-import { McpSetupClient } from "../studio/mcp/mcp-setup-client";
+import "./mcp.css";
+import { McpSetupClient } from "./mcp-setup-client";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/mcp" },
@@ -33,11 +33,11 @@ export default function McpPublicPage() {
           </Reveal>
           <Reveal>
             <p className="of-lede" style={{ maxWidth: 62 + "ch" }}>
-              One endpoint. Bearer auth with your Supabase token. 2 read-only tools —{" "}
+              One endpoint. Bearer auth with your Supabase token. 3 tools — two read-only tools plus a token-gated generation tool —{" "}
               <code style={{ background: "#101214", border: "1px solid var(--of-line)", padding: "2px 6px", borderRadius: 6 }}>openfield_models</code> and{" "}
               <code style={{ background: "#101214", border: "1px solid var(--of-line)", padding: "2px 6px", borderRadius: 6 }}>openfield_pricing</code> — so
-              Claude, Cursor, and friends can list 38 Higgsfield models and token rates without ever seeing your
-              payment keys.
+              Claude, Cursor, and friends can list 38 Higgsfield models, inspect token rates, and generate through Openfield without ever seeing your
+              payment keys. Generation checks the wallet first, atomically deducts the quoted cost, then starts the provider request; failed submits are refunded.
             </p>
           </Reveal>
           <Reveal>
@@ -45,8 +45,8 @@ export default function McpPublicPage() {
               <Link href="/login?next=/mcp" className="of-btn of-btn--lime">
                 Sign in to get token →
               </Link>
-              <Link href="/studio/mcp" className="of-btn">
-                Open in Studio
+              <Link href="/studio" className="of-btn">
+                Back to Studio
               </Link>
             </div>
           </Reveal>
@@ -61,7 +61,7 @@ export default function McpPublicPage() {
             <div>
               <p className="of-kicker">Works everywhere</p>
               <h2 className="of-h2">From prompt to Seedance in one ask.</h2>
-              <p>Ask your AI tool: “What Openfield models can I use for a 9:16 10s video?” — it calls openfield_models, then you generate from the studio or via API.</p>
+              <p>Ask your AI tool: “What Openfield models can I use for a 9:16 10s video?” — it calls openfield_models, then you can generate with openfield_generate. Openfield checks and spends the required tokens before the Higgsfield request begins.</p>
               <div className="of-cta-row">
                 <Link href="/studio" className="of-btn of-btn--lime">
                   Open the studio →
