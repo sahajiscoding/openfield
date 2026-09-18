@@ -75,7 +75,7 @@ export default function LandingPage() {
           <Reveal><p className="of-lede">No subscriptions, no credits casino. One token is $0.01 of Higgsfield API cost — spend per generation, refund on failure.</p></Reveal>
           <div className="of-grid-3">
             <Reveal as="article" className="of-card"><span className="n">01</span><h3>Sign in with Supabase</h3><p>Magic link, password, or Google OAuth. Sessions refresh at the edge; <code>/studio</code> is gated until you&apos;re in.</p></Reveal>
-            <Reveal as="article" className="of-card" delay={90}><span className="n">02</span><h3>Grab tokens</h3><p>UroPay packs in INR — direct UPI: scan the QR, pay, paste the UTR. 720p 16:9 30s of Seedance 2.5 is 260 tokens. Balance lives in the studio top bar.</p></Reveal>
+            <Reveal as="article" className="of-card" delay={90}><span className="n">02</span><h3>Grab tokens</h3><p>UroPay packs in INR — pay on the hosted checkout. 720p 16:9 30s of Seedance 2.5 is 260 tokens. Balance lives in the studio top bar.</p></Reveal>
             <Reveal as="article" className="of-card" delay={180}><span className="n">03</span><h3>One bar, every model</h3><p>The catalog is the source of truth: pick a model, the settings rail and media roles render themselves. <code>⌘/Ctrl + Enter</code> submits.</p></Reveal>
           </div>
         </section>

@@ -3,9 +3,8 @@ import { NextResponse } from "next/server";
 import { buyTokenPack } from "@/lib/billing/actions";
 
 /**
- * QR checkout: returns { qrCode, upiString, uroPayOrderId, tenantRef }.
- * The customer scans the QR in any UPI app, then submits the UTR via
- * /api/billing/submit-utr. Failures arrive as readable { error } strings.
+ * Hosted checkout: returns { openUrl } for the UroPay payment page.
+ * Failures arrive as readable { error } strings.
  */
 export async function POST(request: Request): Promise<NextResponse> {
   let packId: unknown;
@@ -19,8 +18,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const qr = await buyTokenPack(packId);
-    return NextResponse.json({ ok: true, ...qr });
+    const { openUrl } = await buyTokenPack(packId);
+    return NextResponse.json({ ok: true, openUrl });
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : String(caught);
     if (/minified react error|server components render/i.test(message)) {
