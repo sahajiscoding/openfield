@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { getMyBalance } from "@/lib/billing/actions";
+import { hasCompletedOnboarding } from "@/lib/onboarding/actions";
 import { getSessionUser } from "@/lib/supabase/server";
 
 import { StudioShell } from "./studio-shell";
@@ -26,6 +27,8 @@ export default async function StudioPage() {
     redirect("/login?next=/studio&error=missing_env");
   }
   const balance = await getMyBalance().catch(() => 0);
+  // First visit: answer four onboarding questions before generating.
+  if (!(await hasCompletedOnboarding())) redirect("/onboarding?next=/studio");
   return (
     <main aria-label="Openfield studio">
       <StudioShell email={email} balance={balance} />

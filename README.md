@@ -16,6 +16,7 @@ Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfie
 - `/` — editorial landing
 - `/pricing` — token packs (UroPay checkout) + full per-model rate card, comparison, FAQ
 - `/login` — Supabase sign-in (magic link · password · Google) + reset flow
+- `/onboarding` — first-visit quiz (use case, referral, experience, optional DOB) before the studio
 - `/studio` — gated studio (38 Higgsfield models, live token balance in the top bar)
 - `/studio/billing` — balance, UroPay order history, per-order status
 - `/studio/security` — opt-in TOTP second factor
