@@ -1,4 +1,5 @@
 name: one-time contributor history cleanup
+# Triggered intentionally; remove this workflow after the history rewrite.
 
 on:
   push:
