@@ -39,7 +39,7 @@ export default function LandingPage() {
         <section className="of-wrap of-hero" aria-labelledby="hero-h">
           <div>
             <span className="of-eyebrow"><span className="dot" aria-hidden /> $50K Higgsfield-challenge entry · MIT</span>
-            <h1 id="hero-h" className="of-h1">The open studio for <em>cinematic</em> AI video.</h1>
+            <h1 id="hero-h" className="of-h1">The open studio for <em>cinematic</em> AI videos.</h1>
             <p className="of-sub">
               Openfield is the open Higgsfield client — <strong>one prompt bar</strong>, per-model settings,
               every finished run in one gallery — behind <strong>Supabase sign-in</strong>.
