@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ComposerMock } from "./composer-mock";
 import { Reveal } from "./reveal";
 import "./landing.css";
 
@@ -69,23 +70,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="of-composer-mock" role="img" aria-label="Openfield composer preview: one prompt bar driving image and video models">
-            <div className="of-mock-tabs" aria-hidden>
-              <span className="of-mock-tab of-mock-tab--on">Video</span>
-              <span className="of-mock-tab">Image</span>
-              <span className="of-mock-tab">Lip Sync</span>
-            </div>
-            <p className="of-mock-prompt">
-              A lone projectionist in a flooded art-deco cinema, lantern light on black water, slow dolly in, 35mm grain<span className="caret" aria-hidden />
-            </p>
-            <div className="of-mock-row" aria-hidden>
-              <span className="of-chip of-chip--lime">Seedance 2.5</span>
-              <span className="of-chip">16:9</span>
-              <span className="of-chip">5s</span>
-              <span className="of-chip">720p + audio</span>
-              <span className="of-generate">Generate ⏎</span>
-            </div>
-          </div>
+          <ComposerMock />
         </section>
 
         <div className="of-marquee" aria-hidden>

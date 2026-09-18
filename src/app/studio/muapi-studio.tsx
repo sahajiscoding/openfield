@@ -28,10 +28,25 @@ function load(): Tile[] {
   }
 }
 
-export function MuapiStudio({ onNeedsKey }: { onNeedsKey: () => void }) {
-  const [modelId, setModelId] = useState(MUAPI_MODELS[0]!.id);
+export function MuapiStudio({
+  onNeedsKey,
+  initialModelId,
+  initialPrompt,
+}: {
+  onNeedsKey: () => void;
+  initialModelId?: string;
+  initialPrompt?: string;
+}) {
+  const validInitialModel =
+    initialModelId && MUAPI_MODELS.some((m) => m.id === initialModelId)
+      ? initialModelId
+      : MUAPI_MODELS[0]!.id;
+  const [modelId, setModelId] = useState(validInitialModel);
   const model = getMuapiModel(modelId);
-  const [prompt, setPrompt] = useState("Neon monsoon over a night market, reflections chasing a rickshaw, anamorphic streaks");
+  const [prompt, setPrompt] = useState(
+    initialPrompt?.trim() ||
+      "Neon monsoon over a night market, reflections chasing a rickshaw, anamorphic streaks"
+  );
   const [aspect, setAspect] = useState<string>(model.aspects[0]!);
   const [duration, setDuration] = useState<number>(model.durations?.[0] ?? 5);
   const [imageUrl, setImageUrl] = useState("");
