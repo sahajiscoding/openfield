@@ -103,7 +103,27 @@ export async function spendTokens(
   return data as number;
 }
 
-/** Atomically grant (top-ups, refunds). Refunds reuse spend refs safely. */
+/**
+ * Raised when a grant is refused because its ledger reference was already
+ * used. The whole RPC rolls back (migration 002 puts a unique index on
+ * `credit_ledger.ref`, and the function is one transaction), so no tokens were
+ * moved twice — this is the idempotency signal, not an error to report.
+ */
+export const ALREADY_GRANTED = "Tokens already granted for this reference.";
+
+function isDuplicateRef(error: { code?: string; message: string }): boolean {
+  return (
+    error.code === "23505" ||
+    /duplicate key|unique constraint|already exists/i.test(error.message)
+  );
+}
+
+/**
+ * Atomically grant (top-ups, refunds). Refunds reuse spend refs safely.
+ * A duplicate ledger reference throws ALREADY_GRANTED — callers that treat
+ * that as "already credited" must compare against it, not swallow everything:
+ * a permission failure must never look like a successful credit.
+ */
 export async function grantTokens(
   userId: string,
   amount: number,
@@ -117,6 +137,7 @@ export async function grantTokens(
     p_ref: ref,
   });
   if (error) {
+    if (isDuplicateRef(error)) throw new Error(ALREADY_GRANTED);
     if (isPermissionFailure(error)) throw billingPermissionError();
     if (isMissingFunction(error)) throw new Error(MIGRATION_005_HINT);
     throw new Error("Billing error — contact support with your order id.");
@@ -152,6 +173,13 @@ export async function getMyOrders(userId: string, limit = 10): Promise<TokenOrde
 }
 
 export type OrderRow = TokenOrder & { user_id: string; paid_at: string | null };
+
+/**
+ * What the self-lane RPC returns: the same row, minus `user_id` —
+ * `get_my_order` filters on `auth.uid()` inside SQL, so the column would be
+ * redundant, and a caller must never be able to name someone else's id.
+ */
+export type OwnOrderRow = Omit<OrderRow, "user_id">;
 
 /**
  * Legacy service-lane checkout record. Prefer createCheckoutSessionSelf for
@@ -230,8 +258,12 @@ export async function cancelMyOrderSelf(tenantRef: string): Promise<void> {
   await userRpc<null>("cancel_my_order", { p_tenant_ref: tenantRef });
 }
 
-/** Self-lane own-order read (row is pre-filtered to auth.uid() inside SQL). */
-export async function getMyOrderSelf(tenantRef: string): Promise<OrderRow | null> {
+/**
+ * Self-lane own-order read (row is pre-filtered to auth.uid() inside SQL, so
+ * another user's reference returns nothing at all — there is no ownership
+ * check for the caller to forget).
+ */
+export async function getMyOrderSelf(tenantRef: string): Promise<OwnOrderRow | null> {
   const { data, error } = await (await createUserClient()).rpc("get_my_order", {
     p_tenant_ref: tenantRef,
   });
@@ -240,7 +272,7 @@ export async function getMyOrderSelf(tenantRef: string): Promise<OrderRow | null
     if (isMissingFunction(error)) throw new Error(MIGRATION_005_HINT);
     throw new Error("Could not load order.");
   }
-  const rows = (data ?? []) as OrderRow[];
+  const rows = (data ?? []) as OwnOrderRow[];
   return rows[0] ?? null;
 }
 

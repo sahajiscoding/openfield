@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { TOKEN_PACKS } from "@/lib/credits/packs";
 import { ComposerMock } from "./composer-mock";
 import { LandingNav } from "./nav";
-import { BuyPackForm } from "./pricing/buy-form";
+import { TokenPacksGrid } from "./pricing/token-packs";
 import { Reveal } from "./reveal";
 import "./landing.css";
 
@@ -125,17 +124,8 @@ export default function LandingPage() {
           <Reveal><p className="of-kicker">Pricing</p></Reveal>
           <Reveal><h2 id="pricing-h" className="of-h2">No subscriptions. <span style={{ color: "var(--of-lime)" }}>Just tokens.</span></h2></Reveal>
           <Reveal><p className="of-lede">1 token = $0.01 of Higgsfield API cost. Top up with UroPay direct-UPI, spend per generation, refund on failure.</p></Reveal>
-          <div className="of-fx-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-            {TOKEN_PACKS.map((p, i) => (
-              <Reveal key={p.id} as="article" className={`of-card of-tier${i === 1 ? " of-tier--hot" : ""}`}>
-                {p.tag && <span className="of-flag of-flag--lime">{p.tag}</span>}
-                <h3 style={{ fontSize: 27 }}>₹{p.inr}</h3>
-                <p className="of-price" style={{ fontSize: 44 }}>{p.tokens} <span className="of-per">tokens</span></p>
-                <p>{p.blurb}</p>
-                <BuyPackForm packId={p.id} label={`Buy ${p.tokens} tokens`} />
-              </Reveal>
-            ))}
-          </div>
+          {/* Same component, same data as /pricing — packs cannot drift. */}
+          <TokenPacksGrid />
           <p className="of-pack-note"><Link href="/pricing">Full rate card + FAQ →</Link></p>
         </section>
 

@@ -1,10 +1,7 @@
 "use server";
 
-import {
-  EXPERIENCE_LEVELS,
-  REFERRAL_SOURCES,
-  USE_CASES,
-} from "./options";
+import { EXPERIENCE_LEVELS, REFERRAL_SOURCES, USE_CASES } from "./options";
+import { hasCompletedOnboardingFor } from "./status";
 import { createClient, requireSessionUser } from "@/lib/supabase/server";
 
 /**
@@ -37,21 +34,19 @@ function parseDob(value: unknown): string | null {
   return value;
 }
 
-/** True once the user answered or explicitly skipped. Never throws. */
+/**
+ * True once the user answered or explicitly skipped. Never throws.
+ *
+ * Action/security boundary: the user comes from the SESSION, never from an
+ * argument, so a caller cannot probe another account's quiz state. Server
+ * components that already read the session should call
+ * `hasCompletedOnboardingFor(user.id)` from ./status instead — one auth round
+ * trip per request rather than two.
+ */
 export async function hasCompletedOnboarding(): Promise<boolean> {
   try {
     const user = await requireSessionUser();
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("onboarding_responses")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (error) {
-      console.error("[onboarding] status check failed", error.message);
-      return true;
-    }
-    return data !== null;
+    return await hasCompletedOnboardingFor(user.id);
   } catch {
     // Fail open: a config outage must not trap users outside /studio.
     return true;

@@ -1,6 +1,46 @@
+/* The studio owns exactly one viewport.
+
+   The top bar is a row of this column and the studio surface takes everything
+   left over. It used to be the other way round: `.ohf-shell` asked for a full
+   100dvh *below* a ~46px top bar, so the document was ~46px taller than the
+   window and the bottom-docked composer — prompt rail, model/settings pills and
+   the Generate button with it — hung under the fold on a 1366×768 laptop. The
+   page could not scroll to it either (the shell is overflow:hidden), so the
+   primary action was genuinely cut off. Sizing the frame instead of the surface
+   keeps every control above the fold at any height, and leaves the galleries on
+   the tall side rather than the chrome. */
+.of-studio-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.of-studio-frame > .ohf {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.of-studio-frame .ohf-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.of-studio-frame .ohf-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+/* In the frame, nothing scrolls but the gallery, so the bar is a plain first
+   row rather than a sticky lid. */
 .of-studio-top {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -66,5 +106,129 @@
 @media (max-width: 900px) {
   .of-studio-user span {
     display: none;
+  }
+}
+
+/* ---------- route loading (app/studio/loading.tsx) ----------
+
+   The skeleton is laid out with the studio's own geometry — bar height, the
+   dock's bottom rail, the empty field's own anchoring — so the real surface
+   replaces it without moving anything. Only two tones are used, both quieter
+   than any real control: this must never read as content that arrived. */
+
+.of-studio-loading {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background: #08090a;
+  font-family: var(--font-body);
+}
+
+.of-studio-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.of-skel {
+  display: block;
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(237, 234, 224, 0.045) 0%,
+    rgba(237, 234, 224, 0.085) 50%,
+    rgba(237, 234, 224, 0.045) 100%
+  );
+  background-size: 220% 100%;
+  animation: of-skel-sheen 1.8s ease-in-out infinite;
+}
+
+@keyframes of-skel-sheen {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+.of-skel--brand {
+  width: 132px;
+  height: 22px;
+}
+.of-skel--balance {
+  margin-left: auto;
+  width: 168px;
+  height: 32px;
+  border-radius: 999px;
+}
+
+.of-studio-loading-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 72px 20px 0;
+}
+
+.of-skel--tabs {
+  width: 340px;
+  max-width: 60%;
+  height: 46px;
+  border-radius: 15px;
+  margin-bottom: min(11vh, 74px);
+}
+.of-skel--title {
+  width: 300px;
+  max-width: 66%;
+  height: 22px;
+}
+.of-skel--line {
+  width: 440px;
+  max-width: 80%;
+  height: 13px;
+}
+
+/* Sits where the real dock stands: bottom-pinned, same width, same two rows. */
+.of-studio-loading-dock {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 10px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.of-skel--prompt {
+  width: min(940px, 100%);
+  height: 106px;
+  border-radius: 24px;
+}
+.of-skel--rail {
+  width: min(940px, 100%);
+  height: 38px;
+  border-radius: 12px;
+}
+
+@media (max-height: 800px) {
+  .of-studio-loading-body {
+    padding-top: 64px;
+  }
+  .of-studio-loading-dock {
+    padding-top: 8px;
+    padding-bottom: 14px;
+  }
+  .of-skel--prompt {
+    height: 96px;
   }
 }

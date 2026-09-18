@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 
-import {
-  claimWebhookEvent,
-  findOrderByTenantRef,
-  grantTokens,
-  markOrderPaid,
-  setOrderStatus,
-  type OrderRow,
-} from "@/lib/credits/wallet";
+import { creditPaidOrder } from "@/lib/billing/confirm";
+import { claimWebhookEvent, findOrderByTenantRef, setOrderStatus } from "@/lib/credits/wallet";
 import { getUropayOrder, verifyUropayWebhook } from "@/lib/uropay/client";
 
 /**
@@ -19,7 +13,7 @@ import { getUropayOrder, verifyUropayWebhook } from "@/lib/uropay/client";
  * retry answers 500 so UroPay re-delivers.
  */
 
-function normalizeStatus(value: unknown): "paid" | "failed" | "expired" | null {
+function normalizeStatus(value: unknown): string | null {
   if (typeof value !== "string") return null;
   switch (value.trim().toUpperCase()) {
     case "PAID":
@@ -28,27 +22,15 @@ function normalizeStatus(value: unknown): "paid" | "failed" | "expired" | null {
       return "failed";
     case "EXPIRED":
       return "expired";
+    case "CANCELLED":
+      return "cancelled";
+    case "REVIEW_REQUIRED":
+      return "review";
+    case "UTR_SUBMITTED":
+      return "utr_submitted";
     default:
       return null;
   }
-}
-
-async function creditRow(row: OrderRow, providerOrderId: string): Promise<void> {
-  try {
-    await grantTokens(row.user_id, row.tokens, "uropay", `topup:${row.tenant_ref}`);
-  } catch (granted) {
-    // Unique ledger ref → duplicate delivery past the event guard.
-    console.error("[billing] grant race", {
-      tenantRef: row.tenant_ref,
-      detail: granted instanceof Error ? granted.message : granted,
-    });
-  }
-  await markOrderPaid(row.id, providerOrderId);
-  console.info("[billing] credited", {
-    userId: row.user_id,
-    tokens: row.tokens,
-    tenantRef: row.tenant_ref,
-  });
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -111,7 +93,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true, mismatch: true });
     }
 
-    await creditRow(row, event.orderId);
+    // The SAME crediting path the status poll uses — one grant function, one
+    // ledger reference, so a webhook and a poll racing each other still credit
+    // once (the second sees ALREADY_GRANTED and confirms the row).
+    await creditPaidOrder({ ...row, uropay_order_id: event.orderId }, row.user_id);
     return NextResponse.json({ ok: true, credited: true });
   } catch (caught) {
     console.error("[billing] webhook failed", { detail: caught instanceof Error ? caught.message : caught });

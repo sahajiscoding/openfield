@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { TOKEN_PACKS } from "@/lib/credits/packs";
-import { findOrderByTenantRef, getMyOrders, getTokenBalance } from "@/lib/credits/wallet";
+import { getMyOrderSelf, getMyOrders, getTokenBalance } from "@/lib/credits/wallet";
 import { getSessionUser } from "@/lib/supabase/server";
 import "../../landing.css";
 
@@ -29,7 +29,10 @@ export default async function BillingPage({
     getMyOrders(user.id).catch(() => []),
   ]);
   const { ref } = await searchParams;
-  const highlight = ref ? await findOrderByTenantRef(ref).catch(() => null) : null;
+  // `?ref=` only says which order to look at. The read rides the migration-005
+  // self lane, which filters on auth.uid() inside SQL — a reference belonging
+  // to somebody else comes back empty instead of disclosing their order.
+  const highlight = ref ? await getMyOrderSelf(ref).catch(() => null) : null;
 
   return (
     <div className="of-landing">
@@ -44,14 +47,24 @@ export default async function BillingPage({
         {highlight && (
           <div className="of-card" role="status" style={{ marginBottom: 16 }}>
             <span className="n">ORDER {highlight.tenant_ref}</span>
-            <h3 style={{ textTransform: "capitalize" }}>{highlight.status}</h3>
+            <h3 style={{ textTransform: "capitalize" }}>{highlight.status.replace(/_/g, " ")}</h3>
             <p>
               {highlight.tokens} tokens for ₹{highlight.amount}.{" "}
               {highlight.status === "paid"
                 ? "Credited — back to the studio."
-                : "If you just paid, give the webhook a minute, then refresh."}
+                : "Still open? Open its status page instead of paying for a second order."}
             </p>
-            <Link href="/studio" className="of-btn of-btn--lime">Back to studio →</Link>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
+              <Link
+                href={`/billing/payment/${highlight.tenant_ref}`}
+                className="of-btn of-btn--lime"
+              >
+                Payment status →
+              </Link>
+              <Link href="/studio" className="of-btn">
+                Back to studio →
+              </Link>
+            </div>
           </div>
         )}
 
@@ -67,7 +80,15 @@ export default async function BillingPage({
               <tbody>
                 {orders.map((o) => (
                   <tr key={o.id} style={highlight?.id === o.id ? { background: "rgba(212,249,33,0.06)" } : undefined}>
-                    <td><strong>{o.pack_id}</strong><br />{o.tenant_ref}</td>
+                    <td>
+                      <strong>{o.pack_id}</strong>
+                      <br />
+                      {/* The order's own status page — the place to wait, check,
+                          or recover a payment without starting another one. */}
+                      <Link href={`/billing/payment/${o.tenant_ref}`} style={{ color: "var(--of-smoke)", fontSize: 12.5 }}>
+                        {o.tenant_ref} →
+                      </Link>
+                    </td>
                     <td>{o.tokens}</td>
                     <td>₹{o.amount} {o.currency}</td>
                     <td><span className={`of-pill${o.status === "paid" ? " of-pill--lime" : ""}`}>{o.status}</span></td>

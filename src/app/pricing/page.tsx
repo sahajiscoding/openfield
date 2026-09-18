@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { TOKEN_PACKS } from "@/lib/credits/packs";
 import { TOKENS_PER_USD, rateCard, tokensToUsd } from "@/lib/credits/pricing";
 import { LandingNav } from "../nav";
 import { Reveal } from "../reveal";
 import "../landing.css";
 
-import { BuyPackForm } from "./buy-form";
+import { TokenPacksGrid } from "./token-packs";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
@@ -56,17 +55,8 @@ export default function PricingPage() {
           <Reveal><h1 id="pricing-h" className="of-h2" style={{ fontSize: "clamp(38px,5vw,64px)" }}>No subscriptions. <span style={{ color: "var(--of-lime)" }}>Just tokens.</span></h1></Reveal>
           <Reveal><p className="of-lede">1 token = $0.01 of Higgsfield API cost. Top up with UroPay, spend per generation, refund on failure. Nothing else to understand.</p></Reveal>
 
-          <div id="packs" className="of-fx-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-            {TOKEN_PACKS.map((p, i) => (
-              <Reveal key={p.id} as="article" className={`of-card of-tier${i === 1 ? " of-tier--hot" : ""}`}>
-                {p.tag && <span className="of-flag of-flag--lime">{p.tag}</span>}
-                <h3 style={{ fontSize: 27 }}>₹{p.inr}</h3>
-                <p className="of-price" style={{ fontSize: 44 }}>{p.tokens} <span className="of-per">tokens</span></p>
-                <p>{p.blurb}</p>
-                <BuyPackForm packId={p.id} label={`Buy ${p.tokens} tokens`} />
-              </Reveal>
-            ))}
-          </div>
+          {/* Same component, same data as the homepage pricing section. */}
+          <TokenPacksGrid />
           <p className="of-pack-note">Secure checkout via <strong>UroPay</strong> — pay on the hosted page, tokens land automatically. They never expire.</p>
         </section>
 

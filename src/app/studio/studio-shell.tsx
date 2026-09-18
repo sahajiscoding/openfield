@@ -53,7 +53,10 @@ export function StudioShell({ email, balance }: { email: string | undefined; bal
   }
 
   return (
-    <div>
+    /* One viewport, two rows: the bar and the work. `.of-studio-frame` hands
+       the studio every pixel the bar does not use, so the docked composer (and
+       with it Generate) always sits inside the fold. */
+    <div className="of-studio-frame">
       <div className="of-studio-top" role="banner">
         <Link href="/" className="of-brand" aria-label="Back to Openfield home">
           <span className="of-mark" aria-hidden>○</span> Openfield
