@@ -1,21 +1,45 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-
-import { buyTokenPack } from "@/lib/billing/actions";
 
 export function BuyPackForm({ packId, label }: { packId: string; label: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsAuth, setNeedsAuth] = useState(false);
 
   async function buy() {
     setBusy(true);
     setError(null);
+    setNeedsAuth(false);
     try {
-      const { openUrl } = await buyTokenPack(packId);
-      window.location.assign(openUrl);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ packId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        openUrl?: unknown;
+        error?: unknown;
+        code?: unknown;
+      };
+      if (!res.ok || typeof data.openUrl !== "string" || !data.openUrl) {
+        if (data.code === "auth") {
+          setNeedsAuth(true);
+          setError("Sign in to buy tokens.");
+        } else {
+          setError(
+            typeof data.error === "string" && data.error
+              ? data.error
+              : "Checkout failed — try again in a moment.",
+          );
+        }
+        setBusy(false);
+        return;
+      }
+      window.location.assign(data.openUrl);
+    } catch {
+      setError("Couldn't reach the server — check your connection and try again.");
       setBusy(false);
     }
   }
@@ -33,7 +57,8 @@ export function BuyPackForm({ packId, label }: { packId: string; label: string }
       </button>
       {error && (
         <p className="of-error" role="alert" style={{ marginTop: 10 }}>
-          {error}
+          {error}{" "}
+          {needsAuth && <Link href="/login?next=/pricing">Sign in →</Link>}
         </p>
       )}
     </div>
