@@ -46,5 +46,8 @@ jobs:
           fi
           echo "Secret scan clean."
 
+      - name: Validate Supabase migration filenames
+        run: node scripts/check-migration-versions.mjs
+
       - name: Typecheck
         run: npx tsc --noEmit
