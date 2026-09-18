@@ -79,7 +79,7 @@ export async function saveOnboarding(input: {
     },
     { onConflict: "user_id" },
   );
-  if (error) throw mappableDbError(error.message, "Could not save your answers — try again.");
+  if (error) throw mappableDbError(error.message, "Could not save your answers — try again.", error.code);
 }
 
 export async function skipOnboarding(): Promise<void> {
@@ -95,17 +95,19 @@ export async function skipOnboarding(): Promise<void> {
     },
     { onConflict: "user_id" },
   );
-  if (error) throw mappableDbError(error.message, "Could not skip — try again.");
+  if (error) throw mappableDbError(error.message, "Could not skip — try again.", error.code);
 }
 
 /** Turn opaque Postgres failures into actionable, leak-free messages. */
-function mappableDbError(detail: string, fallback: string): Error {
-  console.error("[onboarding] db failed", { detail, keyKind: serviceKeyKind() });
-  if (/does not exist/i.test(detail)) {
+function mappableDbError(detail: string, fallback: string, code?: string): Error {
+  console.error("[onboarding] db failed", { detail, code, keyKind: serviceKeyKind() });
+  // Error codes are safe to show (no secrets) and decisive for debugging.
+  const ref = code ? ` (ref ${code})` : "";
+  if (/does not exist|could not find the table/i.test(detail) || code === "PGRST205" || code === "42P01") {
     return new Error("Database table missing — run migration 003_onboarding.sql in Supabase SQL Editor, then retry.");
   }
-  if (/permission denied|policy|rls|row-level|42501/i.test(detail)) {
-    return new Error(permissionDiagnosis());
+  if (/permission denied|policy|rls|row-level/i.test(detail) || code === "42501") {
+    return new Error(`${permissionDiagnosis()}${ref}`);
   }
-  return new Error(fallback);
+  return new Error(`${fallback}${ref}`);
 }
