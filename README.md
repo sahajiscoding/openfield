@@ -21,6 +21,7 @@ Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfie
 - `/studio/billing` — balance, UroPay order history, per-order status
 - `/billing/payment/[tenantRef]` — server-authoritative payment status (waiting / submitted / verifying / paid / failed / expired / cancelled / not found / unavailable), self-polling
 - `/studio/security` — opt-in TOTP second factor
+- `/mcp` — public MCP setup guide for Cursor, Claude, Windsurf, VS Code, Cline, Claude Code, Codex, Continue, and generic HTTP clients
 
 ## Security model
 
