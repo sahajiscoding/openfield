@@ -534,6 +534,127 @@
   margin: 0;
 }
 
+.of-mcp-v2-card--hero {
+  border-color: rgba(212,249,33,0.35);
+  background:
+    radial-gradient(800px 300px at 20% 0%, rgba(212,249,33,0.12), transparent 60%),
+    radial-gradient(600px 300px at 80% 100%, rgba(237,234,224,0.06), transparent 60%),
+    linear-gradient(180deg, rgba(237,234,224,0.05), rgba(237,234,224,0.01)), var(--of-panel, #131618);
+}
+
+.of-mcp-v2-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+  align-items: center;
+}
+
+@media (max-width: 800px) {
+  .of-mcp-v2-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+.of-mcp-v2-hero h3 {
+  font-size: 26px;
+  margin: 8px 0 8px;
+}
+
+.of-mcp-v2-hero-steps {
+  display: grid;
+  gap: 10px;
+}
+
+.of-mcp-v2-hero-steps div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(8,9,10,0.7);
+  border: 1px solid var(--of-line);
+}
+
+.of-mcp-v2-hero-steps div b {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--of-lime);
+  color: #131600;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.of-mcp-v2-hero-steps div span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--of-bone);
+}
+
+.of-mcp-v2-auth-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #08090a;
+  border: 1px solid var(--of-line);
+  margin: 14px 0;
+}
+
+.of-mcp-v2-auth-toggle button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--of-smoke);
+  font: 700 12px/1 var(--font-body);
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all .16s ease;
+}
+
+.of-mcp-v2-auth-toggle button.on {
+  background: var(--of-bone);
+  color: #101214;
+}
+
+.of-mcp-v2-auth-toggle button.on:first-child {
+  background: var(--of-lime);
+  color: #131600;
+}
+
+.of-mcp-v2-oauth-visual {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(8,9,10,0.6);
+  border: 1px dashed var(--of-line);
+  font-size: 11px;
+  color: var(--of-smoke);
+}
+
+.of-mcp-v2-oauth-visual span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(237,234,224,0.06);
+  border: 1px solid var(--of-line);
+  color: var(--of-bone);
+  font-weight: 600;
+}
+
+.of-mcp-v2-oauth-visual i {
+  font-style: normal;
+  color: var(--of-lime);
+  font-weight: 800;
+}
+
 /* Legacy compatibility - keep old classes hidden but not broken */
 .of-mcp-page {
   min-height: 100dvh;
