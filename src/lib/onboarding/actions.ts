@@ -1,20 +1,17 @@
 "use server";
 
-import { permissionDiagnosis, serviceClient, serviceKeyKind } from "@/lib/supabase/admin";
 import {
   EXPERIENCE_LEVELS,
   REFERRAL_SOURCES,
   USE_CASES,
 } from "./options";
-import { requireSessionUser } from "@/lib/supabase/server";
+import { createClient, requireSessionUser } from "@/lib/supabase/server";
 
-function adminClient() {
-  try {
-    return serviceClient();
-  } catch {
-    throw new Error("Onboarding is not configured.");
-  }
-}
+/**
+ * Quiz answers belong to the user, so they are written AS the user through
+ * the "own onboarding rows" RLS policy (migration 004) — no service key
+ * involved, nothing to misconfigure. Money tables stay service-role-only.
+ */
 
 function isOneOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
   return typeof value === "string" && (allowed as readonly string[]).includes(value);
@@ -44,14 +41,19 @@ function parseDob(value: unknown): string | null {
 export async function hasCompletedOnboarding(): Promise<boolean> {
   try {
     const user = await requireSessionUser();
-    const { data } = await adminClient()
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from("onboarding_responses")
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
+    if (error) {
+      console.error("[onboarding] status check failed", error.message);
+      return true;
+    }
     return data !== null;
   } catch {
-    // Fail open: a billing/config outage must not trap users outside /studio.
+    // Fail open: a config outage must not trap users outside /studio.
     return true;
   }
 }
@@ -68,7 +70,8 @@ export async function saveOnboarding(input: {
   if (!isOneOf(input.experience, EXPERIENCE_LEVELS)) throw new Error("Pick your experience level.");
   const dob = parseDob(input.dob ?? null);
 
-  const { error } = await adminClient().from("onboarding_responses").upsert(
+  const supabase = await createClient();
+  const { error } = await supabase.from("onboarding_responses").upsert(
     {
       user_id: user.id,
       use_case: input.useCase,
@@ -84,7 +87,8 @@ export async function saveOnboarding(input: {
 
 export async function skipOnboarding(): Promise<void> {
   const user = await requireSessionUser();
-  const { error } = await adminClient().from("onboarding_responses").upsert(
+  const supabase = await createClient();
+  const { error } = await supabase.from("onboarding_responses").upsert(
     {
       user_id: user.id,
       use_case: "just-exploring",
@@ -100,14 +104,16 @@ export async function skipOnboarding(): Promise<void> {
 
 /** Turn opaque Postgres failures into actionable, leak-free messages. */
 function mappableDbError(detail: string, fallback: string, code?: string): Error {
-  console.error("[onboarding] db failed", { detail, code, keyKind: serviceKeyKind() });
+  console.error("[onboarding] db failed", { detail, code });
   // Error codes are safe to show (no secrets) and decisive for debugging.
   const ref = code ? ` (ref ${code})` : "";
   if (/does not exist|could not find the table/i.test(detail) || code === "PGRST205" || code === "42P01") {
-    return new Error("Database table missing — run migration 003_onboarding.sql in Supabase SQL Editor, then retry.");
+    return new Error("Database table missing — run migrations 003 and 004 in Supabase SQL Editor, then retry.");
   }
   if (/permission denied|policy|rls|row-level/i.test(detail) || code === "42501") {
-    return new Error(`${permissionDiagnosis()}${ref}`);
+    return new Error(
+      `Database refused the write${ref} — migration 004 (self-service policy) hasn't been applied. Run supabase/migrations/004_onboarding_policies.sql in Supabase SQL Editor, then retry.`,
+    );
   }
   return new Error(`${fallback}${ref}`);
 }
