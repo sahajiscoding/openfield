@@ -127,6 +127,13 @@
   align-items: center;
 }
 
+/* Keep the composer visible in the first viewport instead of centering it
+   against the taller headline column. */
+.of-hero > .of-composer-mock {
+  align-self: start;
+  margin-top: 88px;
+}
+
 .of-eyebrow {
   display: inline-flex;
   align-items: center;
@@ -674,6 +681,10 @@
     grid-template-columns: 1fr;
     padding-top: 56px;
     gap: 32px;
+  }
+
+  .of-hero > .of-composer-mock {
+    margin-top: 0;
   }
 
   .of-nav-links {
