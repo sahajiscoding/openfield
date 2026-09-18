@@ -78,12 +78,15 @@ export default function PricingPage() {
                 )}
                 <h3>{p.name}</h3>
                 <p className="of-pack-tokens">{p.tokens} <span className="of-per">tokens</span></p>
-                <p className="of-pack-price">₹{p.inr} <span>· ₹{(p.inr / p.tokens).toFixed(2)} / token · UPI, cards, netbanking</span></p>
+                <p className="of-pack-price">₹{p.inr} <span>₹{(p.inr / p.tokens).toFixed(2)} / token</span></p>
                 <p className="of-blurb">{p.blurb}</p>
-                <BuyPackForm packId={p.id} label={`Buy ${p.tokens} tokens`} />
+                <div className="of-pack-buy">
+                  <BuyPackForm packId={p.id} label={`Buy ${p.tokens} tokens`} />
+                </div>
               </Reveal>
             ))}
           </div>
+          <p className="of-pack-note">Secure checkout via <strong>UroPay</strong> — UPI, cards, netbanking, wallets &amp; EMI. Tokens never expire.</p>
         </section>
 
         <section className="of-wrap of-section" aria-labelledby="rates-h">
