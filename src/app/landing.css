@@ -871,6 +871,17 @@
   color: var(--of-bone);
 }
 
+/* ── Token packs: slightly roomier 4-up cards ───────────────── */
+.of-token-packs-grid {
+  gap: 16px;
+}
+
+.of-token-packs-grid .of-tier {
+  min-height: 274px;
+  box-sizing: border-box;
+  padding: 34px 30px 30px;
+}
+
 /* ── Token packs: airy 2×2, never a squeezed 4-up ────────── */
 .of-packs-grid {
   display: grid;
