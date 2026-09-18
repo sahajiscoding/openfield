@@ -5,7 +5,7 @@ import Link from "next/link";
  * (Effects, Models) never disappear when navigating between the two.
  * Section anchors are root-relative (`/#effects`) so they work from any page.
  */
-export function LandingNav({ current }: { current?: "pricing" }) {
+export function LandingNav({ current }: { current?: "pricing" | "mcp" }) {
   return (
     <header className="of-nav">
       <div className="of-wrap of-nav-inner">
@@ -22,7 +22,9 @@ export function LandingNav({ current }: { current?: "pricing" }) {
           <Link href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>
             Pricing
           </Link>
-          <Link href="/studio/mcp">MCP</Link>
+          <Link href="/mcp" aria-current={current === "mcp" ? "page" : undefined}>
+            MCP
+          </Link>
         </nav>
         <Link href="/login" className="of-btn of-btn--ghost of-btn--nav-sign">
           Sign in
