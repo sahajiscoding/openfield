@@ -5,12 +5,32 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * RLS exposes none of those tables, so only this key can touch them.
  */
 
-export type ServiceKeyKind = "secret" | "legacy-jwt" | "publishable" | "missing" | "unknown";
+export type ServiceKeyKind =
+  | "secret"
+  | "legacy-service"
+  | "legacy-anon"
+  | "publishable"
+  | "missing"
+  | "unknown";
 
 function rawServiceKey(): string {
   const raw = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
   // Pasted keys often carry whitespace or wrapping quotes — strip both.
   return raw.trim().replace(/^["']|["']$/g, "").trim();
+}
+
+/** Read the unsigned role claim of a legacy JWT (payload is not secret). */
+function legacyRole(key: string): string | null {
+  try {
+    const payload = key.split(".")[1];
+    if (!payload) return null;
+    const json = JSON.parse(
+      Buffer.from(payload.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"),
+    ) as { role?: unknown };
+    return typeof json.role === "string" ? json.role : null;
+  } catch {
+    return null;
+  }
 }
 
 /** What KIND of value is deployed — without ever revealing the value. */
@@ -19,7 +39,12 @@ export function serviceKeyKind(): ServiceKeyKind {
   if (!key) return "missing";
   if (key.startsWith("sb_secret_")) return "secret";
   if (key.startsWith("sb_publishable_")) return "publishable";
-  if (key.startsWith("eyJ")) return "legacy-jwt";
+  if (key.startsWith("eyJ")) {
+    const role = legacyRole(key);
+    if (role === "service_role") return "legacy-service";
+    if (role === "anon") return "legacy-anon";
+    return "unknown";
+  }
   return "unknown";
 }
 
@@ -47,7 +72,10 @@ export function permissionDiagnosis(): string {
       return "Server misconfigured: SUPABASE_SERVICE_ROLE_KEY is empty in Vercel. Add it and redeploy.";
     case "unknown":
       return "Server misconfigured: SUPABASE_SERVICE_ROLE_KEY doesn't look like a Supabase secret — re-paste the full sb_secret_ value in Vercel and redeploy.";
-    default:
-      return "Database refused the write — confirm the sb_secret_ key belongs to THIS Supabase project and redeploy.";
+    case "legacy-anon":
+      return "Server misconfigured: the service slot holds a legacy anon key (role \"anon\"), which cannot bypass row security. Paste the sb_secret_ key — or the legacy service_role key — into SUPABASE_SERVICE_ROLE_KEY in Vercel and redeploy.";
+    case "legacy-service":
+    case "secret":
+      return "Database refused the write even though the key shape is right — the key likely belongs to a DIFFERENT Supabase project than the URL. Confirm both come from the same project dashboard, re-paste, and redeploy.";
   }
 }
