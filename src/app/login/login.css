@@ -1,0 +1,125 @@
+.of-login {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+  background:
+    radial-gradient(800px 400px at 70% 0%, rgba(212, 249, 33, 0.09), transparent 60%),
+    var(--of-void);
+}
+
+.of-login-card {
+  width: min(440px, 100%);
+  border: 1px solid var(--of-line);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #121417, #0b0d0f);
+  padding: 34px 30px 28px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+.of-login-card .of-brand {
+  margin-bottom: 6px;
+}
+
+.of-login-card h1 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 14px 0 8px;
+}
+
+.of-login-card .lede {
+  color: var(--of-smoke);
+  font-size: 15px;
+  margin: 0 0 22px;
+}
+
+.of-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--of-smoke);
+  margin: 0 0 8px;
+}
+
+.of-field input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #08090a;
+  border: 1px solid var(--of-line);
+  border-radius: 12px;
+  color: var(--of-bone);
+  font: 500 15px/1.4 var(--font-body);
+  padding: 13px 14px;
+  margin-bottom: 12px;
+}
+
+.of-field input:focus {
+  border-color: var(--of-lime);
+  outline: none;
+}
+
+.of-login-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.of-login-actions .of-btn {
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.of-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--of-smoke);
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 18px 0 12px;
+}
+
+.of-divider::before,
+.of-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--of-line);
+}
+
+.of-error {
+  border: 1px solid rgba(255, 107, 94, 0.5);
+  background: rgba(255, 107, 94, 0.08);
+  color: #ffb3ab;
+  font-size: 14px;
+  border-radius: 12px;
+  padding: 11px 14px;
+  margin: 0 0 14px;
+}
+
+.of-ok {
+  border: 1px solid rgba(212, 249, 33, 0.45);
+  background: rgba(212, 249, 33, 0.07);
+  color: var(--of-lime);
+  font-size: 14px;
+  border-radius: 12px;
+  padding: 11px 14px;
+  margin: 0 0 14px;
+}
+
+.of-fineprint {
+  color: var(--of-smoke);
+  font-size: 13px;
+  margin: 18px 0 0;
+  text-align: center;
+}
+
+.of-fineprint a {
+  color: var(--of-bone);
+}
