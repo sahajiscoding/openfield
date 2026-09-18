@@ -12,6 +12,8 @@ Built for the **$50K Higgsfield-competitor challenge**: fuses the two open-sourc
 ## Routes
 
 - `/` — editorial landing (Higgsfield-fluent, $10K checklist)
+- `/pricing` — free studio + pay-providers-directly tiers, comparison, FAQ
+- `/byok` — bring-your-own-key guide with live per-browser key status
 - `/login` — Supabase sign-in (magic link · password · Google)
 - `/studio` — gated studio: **Higgsfield · 38** tab + **MuAPI · 400+** tab
 
