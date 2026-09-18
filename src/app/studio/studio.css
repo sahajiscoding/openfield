@@ -10,13 +10,33 @@
    keeps every control above the fold at any height, and leaves the galleries on
    the tall side rather than the chrome. */
 .of-studio-frame {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 228px minmax(0, 1fr);
   height: 100dvh;
   overflow: hidden;
+  background: var(--of-void, #08090a);
 }
 
-.of-studio-frame > .ohf {
+.of-studio-workspace {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.of-studio-app {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+}
+
+.of-studio-app > .ohf {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.of-studio-workspace > .ohf {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -246,3 +266,255 @@
 .of-mcp-card pre { padding: 16px; background: #08090a; border-radius: 10px; white-space: pre-wrap; }
 .of-mcp-card p, .of-mcp-card li { color: var(--of-smoke, #9aa08c); line-height: 1.6; }
 .of-mcp-card li { margin: 8px 0; }
+
+
+/* ---------- studio navigation ---------- */
+
+.of-studio-sidebar {
+  position: relative;
+  z-index: 70;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  background:
+    linear-gradient(180deg, rgba(237,234,224,0.025), transparent 28%),
+    #0b0d0f;
+  border-right: 1px solid var(--of-line, #1d2124);
+  font-family: var(--font-body);
+}
+
+.of-studio-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 6px 18px;
+}
+
+.of-studio-side-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--of-bone, #edeae0);
+  text-decoration: none;
+  font: 800 16px/1 var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.of-studio-side-mark {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--of-line, #1d2124);
+  border-radius: 8px;
+  color: var(--of-lime, #d4f921);
+  font-size: 14px;
+}
+
+.of-studio-sidebar-close,
+.of-studio-menu-button,
+.of-studio-sidebar-backdrop {
+  display: none;
+}
+
+.of-studio-nav {
+  display: grid;
+  gap: 4px;
+}
+
+.of-studio-nav-link {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--of-smoke, #9aa08c);
+  text-decoration: none;
+  font: 650 13px/1 var(--font-body);
+  transition: border-color .16s ease, background .16s ease, color .16s ease, transform .16s ease;
+}
+
+.of-studio-nav-link:hover {
+  color: var(--of-bone, #edeae0);
+  background: rgba(237,234,224,0.035);
+  border-color: rgba(237,234,224,0.08);
+  transform: translateX(1px);
+}
+
+.of-studio-nav-link.is-active {
+  color: var(--of-bone, #edeae0);
+  background: rgba(212,249,33,0.08);
+  border-color: rgba(212,249,33,0.22);
+  box-shadow: inset 2px 0 0 var(--of-lime, #d4f921);
+}
+
+.of-studio-nav-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(237,234,224,0.035);
+  border: 1px solid var(--of-line, #1d2124);
+  color: var(--of-smoke, #9aa08c);
+  font-size: 13px;
+}
+
+.of-studio-nav-link.is-active .of-studio-nav-icon {
+  background: var(--of-lime, #d4f921);
+  border-color: var(--of-lime, #d4f921);
+  color: #131600;
+}
+
+.of-studio-sidebar-foot {
+  margin-top: auto;
+  padding: 16px 8px 4px;
+  border-top: 1px solid var(--of-line, #1d2124);
+}
+
+.of-studio-side-foot-label {
+  display: block;
+  color: var(--of-bone, #edeae0);
+  font: 700 11px/1.3 var(--font-display);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.of-studio-side-foot-copy {
+  display: block;
+  margin-top: 7px;
+  color: var(--of-smoke, #9aa08c);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.of-studio-title {
+  color: var(--of-bone, #edeae0);
+  font: 750 13px/1 var(--font-display);
+  letter-spacing: .02em;
+}
+
+.of-studio-balance {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 8px 14px;
+  border: 1px solid var(--of-lime, #d4f921);
+  border-radius: 999px;
+  background: var(--of-lime, #d4f921);
+  color: #131600;
+  font: 700 12px/1 var(--font-body);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+
+.of-studio-balance[data-empty="true"] {
+  background: transparent;
+  color: var(--of-lime, #d4f921);
+}
+
+.of-studio-menu-button {
+  appearance: none;
+  border: 1px solid var(--of-line, #1d2124);
+  background: rgba(237,234,224,0.03);
+  color: var(--of-bone, #edeae0);
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  padding: 7px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.of-studio-menu-button span {
+  display: block;
+  width: 15px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 999px;
+}
+
+@media (max-width: 900px) {
+  .of-studio-frame {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .of-studio-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(280px, 86vw);
+    box-shadow: 20px 0 60px rgba(0,0,0,0.35);
+    transform: translateX(-102%);
+    transition: transform .2s ease;
+  }
+
+  .of-studio-frame--nav-open .of-studio-sidebar {
+    transform: translateX(0);
+  }
+
+  .of-studio-sidebar-close {
+    display: grid;
+    place-items: center;
+    appearance: none;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--of-line, #1d2124);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--of-smoke, #9aa08c);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .of-studio-sidebar-backdrop {
+    appearance: none;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    border: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .of-studio-frame--nav-open .of-studio-sidebar-backdrop {
+    display: block;
+  }
+
+  .of-studio-menu-button {
+    display: inline-flex;
+  }
+
+  .of-studio-user span {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 560px) {
+  .of-studio-top {
+    padding: 9px 12px;
+    gap: 8px;
+  }
+
+  .of-studio-title {
+    font-size: 12px;
+  }
+
+  .of-studio-balance {
+    padding: 8px 11px;
+    font-size: 11px;
+  }
+
+  .of-studio-user button {
+    padding: 8px 10px;
+  }
+}
