@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { MODELS } from "@/generation/catalog";
+import { MODELS, getModel, parseSettings } from "@/generation/catalog";
+import type { GenerationPlane } from "@/generation/catalog";
+import { costForPlane } from "@/lib/credits/pricing";
+import { getTokenBalance } from "@/lib/credits/wallet";
 import { TOKEN_PACKS } from "@/lib/credits/packs";
+import { clientIpFromHeaders } from "@/lib/rate-limit";
+import { submitGenerationForUser } from "@/generation/submit";
 import { serviceClient } from "@/lib/supabase/admin";
 import { getBaseUrl, getOAuthSecret, verifyAccessToken } from "@/lib/mcp/oauth";
 
@@ -142,13 +147,35 @@ export async function POST(request: Request) {
             description: "List current Openfield token packs and per-model pricing.",
             inputSchema: { type: "object", properties: {} },
           },
+          {
+            name: "openfield_generate",
+            description:
+              "Generate with an Openfield model. The server calculates the token cost, verifies the user's wallet, atomically deducts the cost, then starts the Higgsfield request. Failed submissions are refunded.",
+            inputSchema: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                model: { type: "string", description: "Model id returned by openfield_models." },
+                prompt: { type: "string", minLength: 1, maxLength: 2000 },
+                settings: {
+                  type: "object",
+                  description: "Optional model settings. Omitted settings use the model defaults.",
+                  additionalProperties: true,
+                },
+              },
+              required: ["model", "prompt"],
+            },
+          },
         ],
       },
       { headers: corsHeaders }
     );
   }
   if (body.method === "tools/call") {
-    const params = (body as { params?: { name?: string } }).params;
+    const params = (body as {
+      params?: { name?: string; arguments?: Record<string, unknown> };
+    }).params;
+
     if (params?.name === "openfield_models") {
       return reply(
         body.id,
@@ -170,8 +197,94 @@ export async function POST(request: Request) {
         { headers: corsHeaders }
       );
     }
+
+    if (params?.name === "openfield_generate") {
+      try {
+        const args = asRecord(params.arguments);
+        const modelId = typeof args.model === "string" ? args.model.trim() : "";
+        const prompt = typeof args.prompt === "string" ? args.prompt.trim() : "";
+        if (!modelId || !prompt) {
+          return toolError(body.id, "openfield_generate requires a model and prompt.");
+        }
+        if (prompt.length > 2000) {
+          return toolError(body.id, "Prompt is limited to 2000 characters.");
+        }
+
+        const model = getModel(modelId);
+        const rawSettings = asRecord(args.settings);
+        const plane: GenerationPlane = {
+          model: model.id,
+          prompt: { text: prompt },
+          media: {},
+          settings: parseSettings(model, rawSettings),
+        };
+        const cost = costForPlane(plane);
+        const balance = await getTokenBalance(userId);
+
+        // Friendly preflight check. The shared submit lane repeats the wallet
+        // operation with an atomic spend, which remains the source of truth.
+        if (balance < cost) {
+          return toolError(
+            body.id,
+            `Insufficient tokens. This generation needs ${cost} tokens, but your wallet has ${balance}.`,
+          );
+        }
+
+        const queued = await submitGenerationForUser(
+          userId,
+          plane,
+          `mcp:generate:${userId}:${clientIpFromHeaders(request.headers)}`,
+        );
+
+        return reply(
+          body.id,
+          {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  ok: true,
+                  status: queued.status,
+                  request_id: queued.requestId,
+                  cost_tokens: cost,
+                  message: "Generation queued. Track the run in Openfield Studio.",
+                }),
+              },
+            ],
+          },
+          { headers: corsHeaders },
+        );
+      } catch (caught) {
+        const message = caught instanceof Error ? caught.message : String(caught);
+        return toolError(
+          body.id,
+          message.includes("Insufficient tokens")
+            ? message
+            : message.includes("not configured")
+              ? message
+              : "Generation failed. No additional details are exposed through MCP.",
+        );
+      }
+    }
   }
   return reply(body.id, { error: { code: -32601, message: "Method not found" } }, { headers: corsHeaders });
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function toolError(id: unknown, message: string) {
+  return reply(
+    id,
+    {
+      isError: true,
+      content: [{ type: "text", text: message }],
+    },
+    { headers: corsHeaders() },
+  );
 }
 
 export async function OPTIONS() {
