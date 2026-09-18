@@ -39,7 +39,8 @@ export default function LandingPage() {
             <a href="#how">How it works</a>
             <a href="#effects">Effects</a>
             <a href="#models">Models</a>
-            <a href="#open-source">Open source</a>
+            <Link href="/pricing">Pricing</Link>
+            <Link href="/byok">BYOK</Link>
           </nav>
           <Link href="/login" className="of-btn of-btn--ghost of-btn--nav-sign">Sign in</Link>
           <Link href="/studio" className="of-btn of-btn--lime">Open studio →</Link>
@@ -179,8 +180,9 @@ export default function LandingPage() {
         <span>© 2026 Openfield · MIT · An open Higgsfield alternative</span>
         <span className="right">
           <a href="https://github.com/sahajiscoding/openfield" rel="noopener">GitHub</a>
+          <Link href="/pricing">Pricing</Link>
+          <Link href="/byok">BYOK</Link>
           <Link href="/studio">Studio</Link>
-          <Link href="/login">Sign in</Link>
         </span>
       </footer>
     </div>

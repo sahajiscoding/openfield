@@ -679,3 +679,134 @@
     display: none;
   }
 }
+
+/* ── Pricing + BYOK ───────────────────────────────────────── */
+.of-tier {
+  display: flex;
+  flex-direction: column;
+}
+
+.of-tier--hot {
+  border-color: rgba(212, 249, 33, 0.45);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(212, 249, 33, 0.15);
+}
+
+.of-flag {
+  align-self: flex-start;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--of-smoke);
+  border: 1px solid var(--of-line);
+  padding: 5px 11px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.of-flag--lime {
+  color: var(--of-lime-ink);
+  background: var(--of-lime);
+  border-color: var(--of-lime);
+}
+
+.of-price {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 54px;
+  letter-spacing: -0.02em;
+  margin: 6px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.of-per {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--of-smoke);
+  letter-spacing: 0;
+}
+
+.of-feats {
+  list-style: none;
+  margin: 18px 0 24px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 14.5px;
+  flex: 1;
+}
+
+.of-feats li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  color: var(--of-bone);
+}
+
+.of-feats li::before {
+  content: "✓";
+  color: var(--of-lime);
+  font-weight: 700;
+  flex: none;
+}
+
+.of-faq {
+  border: 1px solid var(--of-line);
+  border-radius: var(--radius);
+  background: var(--of-panel);
+  padding: 0 20px;
+  transition: border-color 0.18s ease;
+}
+
+.of-faq[open] {
+  border-color: rgba(212, 249, 33, 0.4);
+}
+
+.of-faq summary {
+  cursor: pointer;
+  padding: 18px 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.of-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.of-faq summary::after {
+  content: "+";
+  margin-left: auto;
+  color: var(--of-lime);
+  font-size: 20px;
+  font-weight: 400;
+  flex: none;
+  transition: transform 0.2s ease;
+}
+
+.of-faq[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.of-faq p {
+  margin: 0 0 20px;
+  color: var(--of-smoke);
+  font-size: 15px;
+  max-width: 72ch;
+}
+
+.of-faq code {
+  font-family: ui-monospace, "JetBrains Mono", monospace;
+  font-size: 12.5px;
+  background: #08090a;
+  border: 1px solid var(--of-line);
+  padding: 2px 7px;
+  border-radius: 7px;
+  color: var(--of-bone);
+}
