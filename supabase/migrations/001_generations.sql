@@ -6,7 +6,7 @@
 create table if not exists public.generations (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
-  provider text not null default 'higgsfield' check (provider in ('higgsfield', 'muapi')),
+  provider text not null default 'higgsfield' check (provider in ('higgsfield')),
   model text not null,
   prompt text not null default '',
   status text not null default 'running' check (status in ('running', 'completed', 'failed')),

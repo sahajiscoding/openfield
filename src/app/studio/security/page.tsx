@@ -31,7 +31,7 @@ export default async function SecurityPage() {
             <span className="of-mark" aria-hidden>○</span> Openfield
           </Link>
           <h1 id="sec-h">Account security.</h1>
-          <p className="lede">Provider keys live in httpOnly cookies and wipe on sign-out. Add TOTP below.</p>
+          <p className="lede">Generation runs on the operator key — you hold no provider secrets. Add TOTP below.</p>
           <MfaForm />
           <p className="of-fineprint"><Link href="/studio">← Back to studio</Link></p>
         </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { getMyBalance } from "@/lib/billing/actions";
 import { getSessionUser } from "@/lib/supabase/server";
 
 import { StudioShell } from "./studio-shell";
@@ -9,7 +10,7 @@ import "@/openhiggsfield/openhiggsfield.css";
 
 export const metadata: Metadata = {
   title: "Studio",
-  description: "Generate cinematic image and video with Seedance 2.5, Kling, Soul and 400+ MuAPI models.",
+  description: "Generate cinematic image and video with Seedance 2.5, Kling 3, Soul and 30+ Higgsfield models. Pay per generation in tokens.",
   alternates: { canonical: "/studio" },
 };
 
@@ -24,9 +25,10 @@ export default async function StudioPage() {
   } catch {
     redirect("/login?next=/studio&error=missing_env");
   }
+  const balance = await getMyBalance().catch(() => 0);
   return (
     <main aria-label="Openfield studio">
-      <StudioShell email={email} />
+      <StudioShell email={email} balance={balance} />
     </main>
   );
 }

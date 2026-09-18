@@ -1,68 +1,62 @@
 "use server";
 
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 
 import { getModel, parseSettings } from "./catalog";
 import type { GenerationPlane } from "./catalog/types";
-import {
-  MissingCredentialsError,
-  PLATFORM_KEY_COOKIE,
-  PLATFORM_KEY_COOKIE_OPTIONS,
-  decodeCredentials,
-  encodeCredentials,
-  parseCredentialInput,
-} from "./credentials";
 import { createPlatformClient } from "./platform";
 import type { StatusResult } from "./platform";
 import { toPlatform } from "./to-platform";
+import { costForPlane } from "@/lib/credits/pricing";
+import { grantTokens, spendTokens } from "@/lib/credits/wallet";
 import { clientIpFromHeaders, enforceRateLimit } from "@/lib/rate-limit";
 import { requireSessionUser } from "@/lib/supabase/server";
 
-async function callerKey(prefix: string): Promise<string> {
-  const user = await requireSessionUser();
+/**
+ * Generation runs on the operator's server-side Higgsfield key (HF_API_KEY).
+ * Users pay in tokens; every submit spends up front and refunds on failure.
+ */
+
+function operatorClient() {
+  const apiKey = process.env.HF_API_KEY?.trim();
+  if (!apiKey) throw new Error("Generation is not configured yet — try again later.");
+  const baseUrl = (process.env.HF_API_BASE_URL?.trim() || "https://api.higgsfield.ai").replace(
+    /\/$/,
+    "",
+  );
+  // createPlatformClient validates the id:secret shape via toAuthorizationHeader.
+  return createPlatformClient({ apiKey, baseUrl });
+}
+
+async function callerKey(prefix: string): Promise<{ key: string; userId: string }> {
+  const user = await requireSessionUser({ verified: true });
   const ip = clientIpFromHeaders(await headers());
-  return `${prefix}:${user.id}:${ip}`;
-}
-
-export async function savePlatformCredentials(data: unknown) {
-  const user = await requireSessionUser();
-  const { apiKey } = parseCredentialInput(data);
-  const jar = await cookies();
-  jar.set(PLATFORM_KEY_COOKIE, encodeCredentials(apiKey), PLATFORM_KEY_COOKIE_OPTIONS);
-  console.info("[auth] platform key saved", { userId: user.id });
-}
-
-export async function clearPlatformCredentials() {
-  const user = await requireSessionUser();
-  const jar = await cookies();
-  jar.set(PLATFORM_KEY_COOKIE, "", { ...PLATFORM_KEY_COOKIE_OPTIONS, maxAge: 0 });
-  console.info("[auth] platform key cleared", { userId: user.id });
-}
-
-export async function hasPlatformCredentials() {
-  return (await readStoredCredentials()) !== null;
+  return { key: `${prefix}:${user.id}:${ip}`, userId: user.id };
 }
 
 export async function submitGeneration(plane: GenerationPlane) {
-  const user = await requireSessionUser({ verified: true });
-  enforceRateLimit(await callerKey("gen:submit"), 10, 60_000);
+  const { key, userId } = await callerKey("gen:submit");
+  enforceRateLimit(key, 10, 60_000);
+  const model = getModel(plane.model);
+  const parsed: GenerationPlane = {
+    ...plane,
+    settings: parseSettings(model, plane.settings),
+  };
+  const cost = costForPlane(parsed);
+  const spendRef = `gen-${Date.now().toString(36)}-${userId.slice(0, 8)}`;
+  // Throws "Insufficient tokens" before any provider call when short.
+  await spendTokens(userId, cost, `gen:${plane.model}`, spendRef);
   try {
-    const model = getModel(plane.model);
-    const parsed: GenerationPlane = {
-      ...plane,
-      settings: parseSettings(model, plane.settings),
-    };
     const { path, body } = toPlatform(parsed);
-    const queued = await createPlatformClient(await readCredentials()).submit(path, body);
-    console.info("[gen] submitted", { userId: user.id, model: plane.model, requestId: queued.requestId });
+    const queued = await operatorClient().submit(path, body);
+    console.info("[gen] submitted", { userId, model: plane.model, cost, requestId: queued.requestId });
     return queued;
   } catch (caught) {
-    // MissingCredentialsError must reach the client (it opens the key modal);
-    // everything else is logged server-side and flattened so provider internals
-    // and key-validity signals never become an anonymous oracle.
-    if (caught instanceof MissingCredentialsError) throw caught;
-    console.error("[gen] submit failed", { userId: user.id, detail: caught instanceof Error ? caught.message : caught });
-    throw new Error("Generation failed — try again; if it repeats, reconnect your key in the studio.");
+    // Attempts bill on most APIs, but a failed submit refunds here: users pay
+    // only for requests the platform actually queued.
+    await grantTokens(userId, cost, "refund", `${spendRef}:refund`).catch(() => {});
+    console.error("[gen] submit failed", { userId, detail: caught instanceof Error ? caught.message : caught });
+    throw new Error("Generation failed — your tokens were refunded. Try again in a moment.");
   }
 }
 
@@ -71,10 +65,10 @@ export async function submitGeneration(plane: GenerationPlane) {
     next submit — the fan-out belongs on this side of the call, where it is
     genuinely parallel. */
 export async function getGenerationStatuses(data: unknown): Promise<StatusResult[]> {
-  await requireSessionUser({ verified: true });
-  enforceRateLimit(await callerKey("gen:status"), 60, 60_000);
+  const { key } = await callerKey("gen:status");
+  enforceRateLimit(key, 60, 60_000);
   const requestIds = parseRequestIds(data);
-  const client = createPlatformClient(await readCredentials());
+  const client = operatorClient();
   return Promise.all(
     requestIds.map(async (requestId): Promise<StatusResult> => {
       try {
@@ -85,19 +79,6 @@ export async function getGenerationStatuses(data: unknown): Promise<StatusResult
       }
     }),
   );
-}
-
-async function readStoredCredentials() {
-  const jar = await cookies();
-  return decodeCredentials(jar.get(PLATFORM_KEY_COOKIE)?.value);
-}
-
-async function readCredentials() {
-  const stored = await readStoredCredentials();
-  if (!stored) throw new MissingCredentialsError();
-  const baseUrl = process.env.HF_API_BASE_URL;
-  if (!baseUrl) throw new Error("Missing HF_API_BASE_URL");
-  return { ...stored, baseUrl };
 }
 
 function parseRequestIds(data: unknown): string[] {

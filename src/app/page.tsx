@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: "Openfield — the open-source Higgsfield alternative",
   description:
-    "One prompt bar for cinematic AI image and video. Seedance 2.5, Kling 3, Soul, Veo, 400+ MuAPI models, Supabase sign-in. MIT licensed.",
+    "One prompt bar for cinematic AI image and video. Seedance 2.5, Kling 3, Soul Cinema, Supabase sign-in. Pay per generation in tokens.",
 };
 
 const PROVIDERS = [
-  "Seedance 2.5", "Kling 3.0", "Soul Cinema", "Veo 3", "Sora 2", "Wan 2.6",
-  "Hailuo 2.3", "Flux", "Nano Banana 2", "Ideogram", "PixVerse 6", "LTX",
+  "Seedance 2.5", "Kling 3.0", "Soul Cinema", "Wan 3.0 Prime", "MiniMax H3", "Hailuo 2.3",
+  "LTX 2.5", "PixVerse 6", "Grok Imagine", "Ideogram 4.0", "Recraft 4.1", "Soul 2",
 ];
 
 const FX = [
@@ -41,7 +41,6 @@ export default function LandingPage() {
             <a href="#effects">Effects</a>
             <a href="#models">Models</a>
             <Link href="/pricing">Pricing</Link>
-            <Link href="/byok">BYOK</Link>
           </nav>
           <Link href="/login" className="of-btn of-btn--ghost of-btn--nav-sign">Sign in</Link>
           <Link href="/studio" className="of-btn of-btn--lime">Open studio →</Link>
@@ -54,17 +53,17 @@ export default function LandingPage() {
             <span className="of-eyebrow"><span className="dot" aria-hidden /> $50K Higgsfield-challenge entry · MIT</span>
             <h1 id="hero-h" className="of-h1">The open studio for <em>cinematic</em> AI video.</h1>
             <p className="of-sub">
-              Openfield fuses <strong>open-higgsfield</strong> (one prompt bar, per-model settings, gallery)
-              with <strong>open-generative-ai&apos;s</strong> 400-model MuAPI gateway — behind{" "}
-              <strong>Supabase sign-in</strong>. Paste your API key later. Generate now.
+              Openfield is the open Higgsfield client — <strong>one prompt bar</strong>, per-model settings,
+              every finished run in one gallery — behind <strong>Supabase sign-in</strong>.
+              Top up tokens once. Generate by the second.
             </p>
             <div className="of-cta-row">
               <Link href="/studio" className="of-btn of-btn--lime">Start creating — it&apos;s open</Link>
-              <a href="#models" className="of-btn">Browse 60+ models</a>
+              <Link href="/pricing" className="of-btn">See token rates</Link>
             </div>
             <div className="of-meta-row" aria-label="Studio facts">
               <span><b>38</b> Higgsfield models</span>
-              <span><b>24</b> curated MuAPI</span>
+              <span><b>1¢</b> per token</span>
               <span><b>≤2s</b> first paint</span>
               <span><b>100%</b> MIT</span>
             </div>
@@ -83,11 +82,11 @@ export default function LandingPage() {
 
         <section id="how" className="of-wrap of-section" aria-labelledby="how-h">
           <Reveal><p className="of-kicker">How it works</p></Reveal>
-          <Reveal><h2 id="how-h" className="of-h2">Sign in. Paste a key. Direct the scene.</h2></Reveal>
-          <Reveal><p className="of-lede">No closed ecosystem, no studio subscription. Your key, your generations — the studio itself is free and self-hostable.</p></Reveal>
+          <Reveal><h2 id="how-h" className="of-h2">Sign in. Top up. Direct the scene.</h2></Reveal>
+          <Reveal><p className="of-lede">No subscriptions, no credits casino. One token is $0.01 of Higgsfield API cost — spend per generation, refund on failure.</p></Reveal>
           <div className="of-grid-3">
             <Reveal as="article" className="of-card"><span className="n">01</span><h3>Sign in with Supabase</h3><p>Magic link, password, or Google OAuth. Sessions refresh at the edge; <code>/studio</code> is gated until you&apos;re in.</p></Reveal>
-            <Reveal as="article" className="of-card" delay={90}><span className="n">02</span><h3>Bring any key — later</h3><p>Higgsfield <code>id:secret</code> for Seedance/Kling/Soul, or a MuAPI key for 400+ models. Stored in an <code>httpOnly</code> cookie, never in JS.</p></Reveal>
+            <Reveal as="article" className="of-card" delay={90}><span className="n">02</span><h3>Grab tokens</h3><p>UroPay packs in INR — UPI, cards, netbanking. 720p 16:9 30s of Seedance 2.5 is 260 tokens. Balance lives in the studio top bar.</p></Reveal>
             <Reveal as="article" className="of-card" delay={180}><span className="n">03</span><h3>One bar, every model</h3><p>The catalog is the source of truth: pick a model, the settings rail and media roles render themselves. <code>⌘/Ctrl + Enter</code> submits.</p></Reveal>
           </div>
         </section>
@@ -110,34 +109,36 @@ export default function LandingPage() {
 
         <section id="models" className="of-wrap of-section" aria-labelledby="models-h">
           <Reveal><p className="of-kicker">Models</p></Reveal>
-          <Reveal><h2 id="models-h" className="of-h2">Two gateways. One gallery.</h2></Reveal>
-          <Reveal><p className="of-lede">Higgsfield-compatible endpoints for the cheapest Seedance 2.5 + face inputs in the US — plus the MuAPI catalog (Flux, Midjourney, Kling, Sora, Veo) when you need range. Poll every 4s to a 10-minute deadline; skeletons bloom per-tile as runs land.</p></Reveal>
+          <Reveal><h2 id="models-h" className="of-h2">One API. One gallery.</h2></Reveal>
+          <Reveal><p className="of-lede">Every call runs on the official Higgsfield API — Seedance 2.5 with face inputs, Kling 3, Soul Cinema, Wan, LTX and more. Poll every 4s to a 10-minute deadline; skeletons bloom per-tile as runs land. Tokens spend on submit, refund on failure.</p></Reveal>
           <Reveal>
-            <div className="of-table" role="region" aria-label="Model providers" tabIndex={0}>
+            <div className="of-table" role="region" aria-label="Flagship model rates" tabIndex={0}>
               <table>
-                <thead><tr><th scope="col">Provider</th><th scope="col">Auth</th><th scope="col">What you get</th><th scope="col">Status</th></tr></thead>
+                <thead><tr><th scope="col">Model</th><th scope="col">720p · 16:9 · 30s</th><th scope="col">Per image</th></tr></thead>
                 <tbody>
-                  <tr><td><strong>Higgsfield API</strong><br />Soul 2 · Soul Cinema · Seedance 2.5 / Edit / Extend · Kling 3 · Wan · Flux · Ideogram</td><td><span className="of-pill">id:secret</span></td><td>Per-model settings, start/end/reference/video/audio roles, batch ×4, IndexedDB history</td><td><span className="of-pill of-pill--lime">Live</span></td></tr>
-                  <tr><td><strong>MuAPI gateway</strong><br />Seedance · Kling · Veo 3 · Sora 2 · Wan · Hailuo · PixVerse · Flux · Nano Banana · Lip sync</td><td><span className="of-pill">x-api-key</span></td><td>Dual-mode T2I/I2I + T2V/I2V, multi-image inputs, lipsync studio, server proxy</td><td><span className="of-pill of-pill--lime">Live</span></td></tr>
-                  <tr><td><strong>Bring your own</strong><br />Self-host, fork the catalog, add a mapper</td><td><span className="of-pill">env</span></td><td><code>HF_API_BASE_URL</code> + <code>MUAPI_BASE_URL</code> — new entry, zero studio changes</td><td><span className="of-pill">MIT</span></td></tr>
+                  <tr><td><strong>Seedance 2.5</strong><br />Face inputs, edit + extend</td><td><span className="of-pill of-pill--lime">260 tokens</span></td><td>—</td></tr>
+                  <tr><td><strong>Kling 3.0</strong><br />Turbo / Std / Pro / 4K + motion</td><td><span className="of-pill of-pill--lime">126 tokens</span></td><td>—</td></tr>
+                  <tr><td><strong>Wan 3.0 Prime</strong></td><td><span className="of-pill of-pill--lime">143 tokens</span></td><td>—</td></tr>
+                  <tr><td><strong>MiniMax H3</strong></td><td><span className="of-pill of-pill--lime">215 tokens</span></td><td>—</td></tr>
+                  <tr><td><strong>Soul 2</strong></td><td>—</td><td><span className="of-pill of-pill--lime">1 token</span></td></tr>
+                  <tr><td><strong>Kling 2.5 Turbo</strong></td><td><span className="of-pill of-pill--lime">63 tokens</span></td><td>—</td></tr>
                 </tbody>
               </table>
             </div>
           </Reveal>
           <div className="of-split">
-            <Reveal as="article" className="of-card"><span className="n">HIGGSFIELD-COMPAT</span><h3>Submit → poll → bloom</h3><p><code>POST /&#123;model&#125;</code> then <code>GET /requests/&#123;id&#125;/status</code> with <code>Authorization: Key …</code>. Server actions are the only caller — the browser never touches the key.</p></Reveal>
-            <Reveal as="article" className="of-card" delay={90}><span className="n">MUAPI</span><h3>Two-step, proxied</h3><p><code>POST /api/v1/&#123;endpoint&#125;</code> then poll <code>/predictions/&#123;id&#125;/result</code> under <code>x-api-key</code>. Uploads go through <code>/api/v1/upload_file</code>.</p></Reveal>
+            <Reveal as="article" className="of-card"><span className="n">HIGGSFIELD API</span><h3>Submit → poll → bloom</h3><p><code>POST /&#123;model&#125;</code> then <code>GET /requests/&#123;id&#125;/status</code> under the operator key. Server actions are the only caller — the browser never touches provider credentials.</p></Reveal>
+            <Reveal as="article" className="of-card" delay={90}><span className="n">TOKENS</span><h3>Spend on submit, refund on failure</h3><p>Cost quotes derive from the official $/sec rate card at 100 tokens per $1. Balance in the top bar, history on <code>/studio/billing</code>. <Link href="/pricing">Full rate card →</Link></p></Reveal>
           </div>
         </section>
 
         <section id="open-source" className="of-wrap of-section" aria-labelledby="oss-h">
           <Reveal><p className="of-kicker">Open source</p></Reveal>
           <Reveal><h2 id="oss-h" className="of-h2">Built on giants. MIT all the way down.</h2></Reveal>
-          <Reveal><p className="of-lede">Openfield stands on the two repos from the $50K call — credited, linked, and licensed. Fork it, self-host it, QT it with your demo.</p></Reveal>
-          <div className="of-grid-3">
-            <Reveal as="article" className="of-card"><span className="n">UPSTREAM ①</span><h3>open-higgsfield</h3><p>Studio shell, 38-model catalog, server actions, Zustand + IndexedDB. <a href="https://github.com/wide-trace/open-higgsfield" rel="noopener">wide-trace/open-higgsfield →</a></p></Reveal>
-            <Reveal as="article" className="of-card" delay={90}><span className="n">UPSTREAM ②</span><h3>open-generative-ai</h3><p>MuAPI gateway, 400+ models, dual-mode studios, lip sync. <a href="https://github.com/anil-matcha/open-generative-ai" rel="noopener">anil-matcha/open-generative-ai →</a></p></Reveal>
-            <Reveal as="article" className="of-card" delay={180}><span className="n">THIS REPO</span><h3>sahajiscoding/openfield</h3><p>Supabase auth, dual-provider studio, $10K-checklist UI. <a href="https://github.com/sahajiscoding/openfield" rel="noopener">sahajiscoding/openfield →</a></p></Reveal>
+          <Reveal><p className="of-lede">Openfield is built on the open-source Higgsfield studio — credited, linked, and licensed. Fork it, self-host it, QT it with your demo.</p></Reveal>
+          <div className="of-split">
+            <Reveal as="article" className="of-card"><span className="n">UPSTREAM</span><h3>open-higgsfield</h3><p>Studio shell, 38-model catalog, server actions, Zustand + IndexedDB. <a href="https://github.com/wide-trace/open-higgsfield" rel="noopener">wide-trace/open-higgsfield →</a></p></Reveal>
+            <Reveal as="article" className="of-card" delay={90}><span className="n">THIS REPO</span><h3>sahajiscoding/openfield</h3><p>Supabase auth, token billing via UroPay, credits-priced studio. <a href="https://github.com/sahajiscoding/openfield" rel="noopener">sahajiscoding/openfield →</a></p></Reveal>
           </div>
         </section>
 
@@ -146,10 +147,10 @@ export default function LandingPage() {
             <div>
               <p className="of-kicker">Seven days. One demo.</p>
               <h2 id="cta-h" className="of-h2">Make something people actually use.</h2>
-              <p>Sign in, paste a key when you have one, and ship your first Seedance run in under a minute. Free, open, yours.</p>
+              <p>Sign in, grab tokens, and ship your first Seedance run in under a minute. Pay per second, never per month.</p>
               <div className="of-cta-row">
                 <Link href="/studio" className="of-btn of-btn--lime">Open the studio →</Link>
-                <Link href="/login" className="of-btn">Sign in</Link>
+                <Link href="/pricing" className="of-btn">Pricing</Link>
               </div>
             </div>
             <div className="of-composer-mock" aria-hidden>
@@ -166,7 +167,6 @@ export default function LandingPage() {
         <span className="right">
           <a href="https://github.com/sahajiscoding/openfield" rel="noopener">GitHub</a>
           <Link href="/pricing">Pricing</Link>
-          <Link href="/byok">BYOK</Link>
           <Link href="/studio">Studio</Link>
         </span>
       </footer>
