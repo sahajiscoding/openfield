@@ -76,6 +76,10 @@ export function permissionDiagnosis(): string {
       return "Server misconfigured: the service slot holds a legacy anon key (role \"anon\"), which cannot bypass row security. Paste the sb_secret_ key — or the legacy service_role key — into SUPABASE_SERVICE_ROLE_KEY in Vercel and redeploy.";
     case "legacy-service":
     case "secret":
-      return "Database refused the write even though the key shape is right — the key likely belongs to a DIFFERENT Supabase project than the URL. Confirm both come from the same project dashboard, re-paste, and redeploy.";
+      // 42501 with a secret-shaped key means the gateway didn't recognize the
+      // value (typo, rotation, wrong project) and ran the request as anonymous,
+      // which RLS then blocked. The shape check can't catch that — only a
+      // fresh copy from the dashboard can.
+      return "Write blocked (ref 42501): the deployed secret isn't recognized, so the request ran as anonymous. In Supabase → API Keys confirm the key still exists, Copy it with the button (don't retype), replace SUPABASE_SERVICE_ROLE_KEY in Vercel on all environments, and redeploy. Last resort: use the legacy service_role JWT instead.";
   }
 }
