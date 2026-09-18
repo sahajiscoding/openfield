@@ -23,7 +23,7 @@ export function TokenPacksGrid({
   animate?: boolean;
 }) {
   return (
-    <div id="packs" className="of-fx-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+    <div id="packs" className="of-fx-grid of-token-packs-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
       {packs.map((pack) => {
         const className = `of-card of-tier${pack.id === FEATURED_PACK_ID ? " of-tier--hot" : ""}`;
         const body = (
