@@ -70,7 +70,7 @@ function getConfigs(_endpoint: string): ToolConfig[] {
         "Add server with URL below — no token needed",
         "Claude will open browser to Openfield for auth",
         "Sign in → Allow → back to Claude, 3 tools appear",
-        "If OAuth not supported, use manual mcp-remote config below",
+        "OAuth is required — add the server URL and authenticate in the browser",
       ],
       getOAuthConfig: (ep) =>
         JSON.stringify(
@@ -341,7 +341,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
           <div className="of-mcp-v2-card-head">
             <span className="n">AUTHENTICATION</span>
             <span className="of-flag of-flag--lime" style={{ fontSize: 10 }}>
-              {authMethod === "oauth" ? "OAuth recommended" : tokenStatus === "found" ? "Token found" : "Manual fallback"}
+              OAuth only
             </span>
           </div>
           <h3>OAuth — browser flow</h3>
@@ -432,7 +432,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
             {cliText && (
               <div className="of-mcp-v2-code-card" style={{ marginTop: 14 }}>
                 <div className="of-mcp-v2-code-head">
-                  <span>{authMethod === "oauth" ? "OAuth CLI" : "Manual CLI"}</span>
+                  <span>OAuth CLI</span>
                   <button className="of-btn" style={{ padding: "6px 12px", fontSize: 11 }} onClick={() => copy(cliText, "cli")}>
                     {copied === "cli" ? "Copied!" : "Copy"}
                   </button>
