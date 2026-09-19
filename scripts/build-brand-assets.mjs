@@ -76,7 +76,7 @@ function findChrome() {
 
 const CHROME = findChrome();
 const ROOT = resolve(import.meta.dirname, "..");
-const WORK = mkdtempSync(join(tmpdir(), "openhiggsfield-brand-"));
+const WORK = mkdtempSync(join(tmpdir(), "openfield-brand-"));
 
 function shoot(out, html, width, height, { transparent = false } = {}) {
   const page = join(WORK, `${width}x${height}-${Math.abs(hash(out))}.html`);
@@ -167,7 +167,7 @@ const og = `<!doctype html><meta charset="utf-8">
 <div class="field">${markSvg(454, { stroke: 1.15, accent: "rgba(111,227,192,0.17)", ink: "rgba(255,255,255,0.085)" })}</div>
 <div class="band mark">${markSvg(58, { stroke: 2.5 })}</div>
 <div class="mid"><div class="band">
-  <h1>OpenHiggsfield AI</h1>
+  <h1>Openfield AI</h1>
   <div class="descriptor">Open source AI studio</div>
   <div class="rule"></div>
   <p>One prompt bar for image and video. Each model&rsquo;s own settings, and every finished run in one gallery.</p>
@@ -175,7 +175,7 @@ const og = `<!doctype html><meta charset="utf-8">
 <div class="grain"></div>`;
 
 console.log("open graph");
-// public/, not app/opengraph-image.png — see the OG_IMAGE note in src/site.ts.
+// public/, for local/static brand exports. The app-level Open Graph route is the runtime source for social metadata.
 shoot(join(ROOT, "public/og.png"), og, 1200, 630);
 
 rmSync(WORK, { recursive: true, force: true });
