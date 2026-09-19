@@ -1,0 +1,4 @@
+Contact: https://github.com/sahajiscoding/openfield/security/advisories/new
+Expires: 2027-09-19T00:00:00Z
+Preferred-Languages: en
+Canonical: https://openfieldai.vercel.app/.well-known/security.txt
