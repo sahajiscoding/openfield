@@ -5,23 +5,16 @@ export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const base = getBaseUrl(request);
-  const resource = `${base}/api/mcp`;
-  const authServer = `${base}/api/mcp/.well-known/oauth-authorization-server`;
-
-  const metadata = {
-    resource,
-    authorization_servers: [authServer],
-    bearer_methods_supported: ["header"],
-    scopes_supported: ["mcp"],
-    resource_name: "Openfield MCP",
-  };
-
-  return NextResponse.json(metadata, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=3600",
+  return NextResponse.json(
+    {
+      resource: `${base}/api/mcp`,
+      authorization_servers: [`${base}/api/mcp/.well-known/oauth-authorization-server`],
+      bearer_methods_supported: ["header"],
+      scopes_supported: ["mcp"],
+      resource_name: "Openfield MCP",
     },
-  });
+    { headers: { "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600" } },
+  );
 }
 
 export async function OPTIONS() {
