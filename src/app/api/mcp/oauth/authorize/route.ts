@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getBaseUrl, getOAuthSecret, createAuthorizationCode } from "@/lib/mcp/oauth";
+import { getBaseUrl, getOAuthSecret, createAuthorizationCode, verifyClientId } from "@/lib/mcp/oauth";
 
 export const runtime = "nodejs";
 
@@ -49,8 +49,17 @@ export async function GET(request: Request) {
   const state = url.searchParams.get("state") || "";
   const code_challenge = url.searchParams.get("code_challenge") || "";
   const code_challenge_method = url.searchParams.get("code_challenge_method") || "S256";
+  const secret = getOAuthSecret();
+  const client = verifyClientId(client_id, secret);
 
   // Validate required params
+  if (!client) {
+    return new NextResponse(
+      htmlPage(`<p class="kicker">Error</p><h1>Unknown OAuth client</h1><p>The MCP client registration is missing or invalid. Re-add the server so the client can register again.</p>`),
+      { status: 400, headers: { "Content-Type": "text/html", "Cache-Control": "no-store" } }
+    );
+  }
+
   if (!redirect_uri) {
     return new NextResponse(
       htmlPage(`<p class="kicker">Error</p><h1>Missing redirect_uri</h1><p>MCP client must provide redirect_uri.</p>`),
@@ -58,10 +67,31 @@ export async function GET(request: Request) {
     );
   }
 
+  if (!client.response_types.includes(response_type) || !client.grant_types.includes("authorization_code")) {
+    return new NextResponse(
+      htmlPage(`<p class="kicker">Error</p><h1>Unsupported OAuth request</h1><p>This client is not registered for the authorization code flow.</p>`),
+      { status: 400, headers: { "Content-Type": "text/html", "Cache-Control": "no-store" } }
+    );
+  }
+
+  if (!client.redirect_uris.includes(redirect_uri)) {
+    return new NextResponse(
+      htmlPage(`<p class="kicker">Error</p><h1>Redirect URI mismatch</h1><p>The redirect URI is not one of the URIs registered for this client.</p>`),
+      { status: 400, headers: { "Content-Type": "text/html", "Cache-Control": "no-store" } }
+    );
+  }
+
   if (response_type !== "code") {
     return new NextResponse(
       htmlPage(`<p class="kicker">Error</p><h1>Unsupported response_type</h1><p>Only <code>code</code> is supported.</p>`),
       { status: 400, headers: { "Content-Type": "text/html" } }
+    );
+  }
+
+  if (code_challenge_method !== "S256" || !code_challenge) {
+    return new NextResponse(
+      htmlPage(`<p class="kicker">Error</p><h1>PKCE required</h1><p>Openfield MCP requires OAuth PKCE with S256.</p>`),
+      { status: 400, headers: { "Content-Type": "text/html", "Cache-Control": "no-store" } }
     );
   }
 
@@ -84,8 +114,8 @@ export async function GET(request: Request) {
   // Show consent page with hidden fields POST to same endpoint
   const content = `
     <p class="kicker">Openfield MCP · OAuth</p>
-    <h1>Allow <b style="color:var(--lime)">${escapeHtml(client_id)}</b> to access Openfield?</h1>
-    <p>This will let <b>${escapeHtml(client_id)}</b> list your available models and token pricing via MCP. No payment credentials or service keys are ever exposed. You can revoke by signing out.</p>
+    <h1>Allow <b style="color:var(--lime)">${escapeHtml(client.client_name)}</b> to access Openfield?</h1>
+    <p>This will let <b>${escapeHtml(client.client_name)}</b> list your available models and token pricing via MCP. No payment credentials or service keys are ever exposed. You can revoke by signing out.</p>
     <div class="client">
       <div><b>Client:</b> ${escapeHtml(client_id)}</div>
       <div><b>Scope:</b> ${escapeHtml(scope)}</div>
@@ -145,8 +175,12 @@ export async function POST(request: Request) {
   const code_challenge = params.code_challenge || url.searchParams.get("code_challenge") || "";
   const code_challenge_method = params.code_challenge_method || url.searchParams.get("code_challenge_method") || "S256";
 
-  if (!redirect_uri) {
-    return new NextResponse("Missing redirect_uri", { status: 400 });
+  const client = verifyClientId(client_id, secret);
+  if (!client || !redirect_uri || !client.redirect_uris.includes(redirect_uri) || !client.response_types.includes("code")) {
+    return new NextResponse("Invalid OAuth client or redirect_uri", { status: 400 });
+  }
+  if (code_challenge_method !== "S256" || !code_challenge) {
+    return new NextResponse("PKCE S256 is required", { status: 400 });
   }
 
   // Check session again
@@ -183,6 +217,8 @@ export async function POST(request: Request) {
   const redirectUrl = new URL(redirect_uri);
   redirectUrl.searchParams.set("code", code);
   if (state) redirectUrl.searchParams.set("state", state);
+  // RFC 9207 issuer binding: clients must validate this before redeeming the code.
+  redirectUrl.searchParams.set("iss", base);
 
   return NextResponse.redirect(redirectUrl.toString());
 }
