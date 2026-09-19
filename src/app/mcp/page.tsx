@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/mcp" },
   title: "MCP — Connect Openfield to Claude, Cursor, and any AI tool",
   description:
-    "Add Openfield to Claude Desktop, Cursor, Windsurf, VS Code, Cline, Claude Code, Codex, Continue, or any MCP client. One endpoint, Bearer auth, model/pricing discovery, and token-gated generation.",
+    "Add Openfield to Claude Desktop, Cursor, Windsurf, VS Code, Cline, Claude Code, Codex, Continue, or any MCP client. One endpoint, OAuth 2.1 authentication, model/pricing discovery, and token-gated generation.",
 };
 
 export default function McpPublicPage() {
@@ -33,7 +33,7 @@ export default function McpPublicPage() {
           </Reveal>
           <Reveal>
             <p className="of-lede" style={{ maxWidth: 62 + "ch" }}>
-              One endpoint. Bearer auth with your Supabase token. 3 tools — two read-only tools plus a token-gated generation tool —{" "}
+              One endpoint. OAuth 2.1 with PKCE — no Supabase token copying. 3 tools — two read-only tools plus a token-gated generation tool —{" "}
               <code style={{ background: "#101214", border: "1px solid var(--of-line)", padding: "2px 6px", borderRadius: 6 }}>openfield_models</code> and{" "}
               <code style={{ background: "#101214", border: "1px solid var(--of-line)", padding: "2px 6px", borderRadius: 6 }}>openfield_pricing</code> — so
               Claude, Cursor, and friends can list 38 Higgsfield models, inspect token rates, and generate through Openfield without ever seeing your
@@ -42,8 +42,8 @@ export default function McpPublicPage() {
           </Reveal>
           <Reveal>
             <div className="of-cta-row" style={{ marginTop: 20 }}>
-              <Link href="/login?next=/mcp" className="of-btn of-btn--lime">
-                Sign in to get token →
+              <Link href="#oauth-setup" className="of-btn of-btn--lime">
+                How OAuth works →
               </Link>
               <Link href="/studio" className="of-btn">
                 Back to Studio
@@ -51,7 +51,7 @@ export default function McpPublicPage() {
             </div>
           </Reveal>
 
-          <div style={{ marginTop: 48 }}>
+          <div id="oauth-setup" style={{ marginTop: 48 }}>
             <McpSetupClient endpoint={endpoint} />
           </div>
         </section>
@@ -80,7 +80,7 @@ export default function McpPublicPage() {
               <div className="of-mock-row">
                 <span className="of-chip">openfield_models ✓</span>
                 <span className="of-chip">openfield_pricing ✓</span>
-                <span className="of-chip of-chip--lime">Bearer auth ✓</span>
+                <span className="of-chip of-chip--lime">OAuth 2.1 ✓</span>
               </div>
             </div>
           </div>
