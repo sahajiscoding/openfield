@@ -1,70 +1,114 @@
 import { NextResponse } from "next/server";
-import { getBaseUrl, generateRandomString } from "@/lib/mcp/oauth";
+import { createClientId, getBaseUrl, getOAuthSecret } from "@/lib/mcp/oauth";
 
 export const runtime = "nodejs";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
 export async function POST(request: Request) {
-  let body: Record<string, unknown> = {};
+  let body: Record<string, unknown>;
   try {
-    body = await request.json();
+    body = (await request.json()) as Record<string, unknown>;
   } catch {
-    const text = await request.text().catch(() => "");
-    if (text) {
-      try {
-        body = JSON.parse(text);
-      } catch {
-        // ignore
+    return NextResponse.json(
+      { error: "invalid_client_metadata", error_description: "Registration body must be JSON." },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  const rawRedirectUris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
+  const redirectUris = rawRedirectUris.filter((value): value is string => typeof value === "string");
+
+  if (!redirectUris.length || redirectUris.length !== rawRedirectUris.length) {
+    return NextResponse.json(
+      { error: "invalid_redirect_uri", error_description: "redirect_uris must contain at least one valid URI." },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  for (const redirectUri of redirectUris) {
+    try {
+      const parsed = new URL(redirectUri);
+      if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") {
+        return NextResponse.json(
+          { error: "invalid_redirect_uri", error_description: "Redirect URIs must use HTTPS, except localhost development URIs." },
+          { status: 400, headers: corsHeaders },
+        );
       }
+    } catch {
+      return NextResponse.json(
+        { error: "invalid_redirect_uri", error_description: "Every redirect URI must be an absolute URI." },
+        { status: 400, headers: corsHeaders },
+      );
     }
   }
 
-  const clientId = (body.client_id as string) || `openfield-mcp-${generateRandomString(8)}`;
-  const clientSecret = generateRandomString(24);
-  const redirectUris = (body.redirect_uris as string[]) || (body.redirect_uri ? [body.redirect_uri as string] : []);
+  const responseTypes = Array.isArray(body.response_types)
+    ? body.response_types.filter((value): value is string => typeof value === "string")
+    : ["code"];
+  const grantTypes = Array.isArray(body.grant_types)
+    ? body.grant_types.filter((value): value is string => typeof value === "string")
+    : ["authorization_code"];
 
-  const response = {
-    client_id: clientId,
-    client_secret: clientSecret,
-    client_id_issued_at: Math.floor(Date.now() / 1000),
-    client_secret_expires_at: 0,
-    redirect_uris: redirectUris.length ? redirectUris : undefined,
-    grant_types: ["authorization_code", "refresh_token"],
-    response_types: ["code"],
-    token_endpoint_auth_method: "none",
-    scope: "mcp",
-    client_name: (body.client_name as string) || "MCP Client",
-  };
+  if (!responseTypes.includes("code") || !grantTypes.includes("authorization_code")) {
+    return NextResponse.json(
+      { error: "invalid_client_metadata", error_description: "Openfield MCP OAuth supports authorization_code with response type code." },
+      { status: 400, headers: corsHeaders },
+    );
+  }
 
-  return NextResponse.json(response, {
-    status: 201,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Cache-Control": "no-store",
+  if (body.token_endpoint_auth_method && body.token_endpoint_auth_method !== "none") {
+    return NextResponse.json(
+      { error: "invalid_client_metadata", error_description: "Openfield MCP uses public PKCE clients; token_endpoint_auth_method must be none." },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  const applicationType = body.application_type === "native" ? "native" : "web";
+  const clientName =
+    typeof body.client_name === "string" && body.client_name.trim()
+      ? body.client_name.trim().slice(0, 120)
+      : "MCP client";
+  const clientUri = typeof body.client_uri === "string" ? body.client_uri : undefined;
+
+  const clientId = createClientId(
+    {
+      client_name: clientName,
+      redirect_uris: redirectUris,
+      response_types: responseTypes,
+      grant_types: grantTypes,
+      token_endpoint_auth_method: "none",
+      application_type: applicationType,
+      client_uri: clientUri,
     },
-  });
+    getOAuthSecret(),
+  );
+
+  const base = getBaseUrl(request);
+
+  return NextResponse.json(
+    {
+      client_id: clientId,
+      client_name: clientName,
+      redirect_uris: redirectUris,
+      response_types: ["code"],
+      grant_types: ["authorization_code", "refresh_token"],
+      token_endpoint_auth_method: "none",
+      application_type: applicationType,
+      ...(clientUri ? { client_uri: clientUri } : {}),
+      client_id_issued_at: Math.floor(Date.now() / 1000),
+      client_secret_expires_at: 0,
+      registration_client_uri: `${base}/api/mcp/oauth/register`,
+      scope: "mcp",
+    },
+    { status: 201, headers: { ...corsHeaders, "Cache-Control": "no-store" } },
+  );
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
-}
-
-export async function GET(request: Request) {
-  const base = getBaseUrl(request);
-  return NextResponse.json(
-    {
-      message: "Use POST to register",
-      registration_endpoint: `${base}/api/mcp/oauth/register`,
-    },
-    {
-      headers: { "Access-Control-Allow-Origin": "*" },
-    }
-  );
+  return new NextResponse(null, { headers: corsHeaders });
 }
