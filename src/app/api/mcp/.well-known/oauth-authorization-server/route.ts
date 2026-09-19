@@ -13,13 +13,12 @@ export async function GET(request: Request) {
     authorization_endpoint: `${authBase}/authorize`,
     token_endpoint: `${authBase}/token`,
     registration_endpoint: `${authBase}/register`,
-    scopes_supported: ["mcp", "openid", "profile", "email"],
+    scopes_supported: ["mcp"],
     response_types_supported: ["code"],
     response_modes_supported: ["query"],
     grant_types_supported: ["authorization_code", "refresh_token"],
-    code_challenge_methods_supported: ["S256", "plain"],
-    token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
-    // For MCP clients that do discovery
+    code_challenge_methods_supported: ["S256"],
+    token_endpoint_auth_methods_supported: ["none"],
     authorization_response_iss_parameter_supported: true,
   };
 
