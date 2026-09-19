@@ -1,0 +1,22 @@
+# Openfield AI
+
+> Openfield AI is an AI image and video generation studio.
+
+## Main pages
+
+- https://openfieldai.vercel.app/
+- https://openfieldai.vercel.app/pricing
+- https://openfieldai.vercel.app/mcp
+
+## MCP
+
+The Openfield MCP server endpoint is:
+
+https://openfieldai.vercel.app/api/mcp
+
+OAuth discovery metadata is available through the standard MCP well-known endpoints.
+
+## Notes
+
+- The /mcp page is documentation/setup information.
+- The /api/mcp endpoint is the actual MCP server.
