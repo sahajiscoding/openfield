@@ -6,12 +6,11 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   const base = getBaseUrl(request);
   const resource = `${base}/api/mcp`;
-  const authServer = `${base}/api/mcp/.well-known/oauth-authorization-server`;
 
   return NextResponse.json(
     {
       resource,
-      authorization_servers: [authServer],
+      authorization_servers: [base],
       bearer_methods_supported: ["header"],
       scopes_supported: ["mcp"],
       resource_name: "Openfield MCP",
