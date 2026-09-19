@@ -194,7 +194,7 @@ export async function POST(request: Request) {
 
   if (!user || !session) {
     const loginUrl = new URL(`${base}/login`);
-    loginUrl.searchParams.set("next", request.url);
+    loginUrl.searchParams.set("next", `${url.pathname}${url.search}`);
     return NextResponse.redirect(loginUrl.toString());
   }
 
