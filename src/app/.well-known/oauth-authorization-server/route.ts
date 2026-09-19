@@ -7,25 +7,22 @@ export async function GET(request: Request) {
   const base = getBaseUrl(request);
   const authBase = `${base}/api/mcp/oauth`;
 
-  // Root discovery should point to MCP auth server
-  const metadata = {
-    issuer: base,
-    authorization_endpoint: `${authBase}/authorize`,
-    token_endpoint: `${authBase}/token`,
-    registration_endpoint: `${authBase}/register`,
-    scopes_supported: ["mcp", "openid", "profile", "email"],
-    response_types_supported: ["code"],
-    grant_types_supported: ["authorization_code", "refresh_token"],
-    code_challenge_methods_supported: ["S256", "plain"],
-    token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
-  };
-
-  return NextResponse.json(metadata, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=3600",
+  return NextResponse.json(
+    {
+      issuer: base,
+      authorization_endpoint: `${authBase}/authorize`,
+      token_endpoint: `${authBase}/token`,
+      registration_endpoint: `${authBase}/register`,
+      scopes_supported: ["mcp"],
+      response_types_supported: ["code"],
+      response_modes_supported: ["query"],
+      grant_types_supported: ["authorization_code", "refresh_token"],
+      code_challenge_methods_supported: ["S256"],
+      token_endpoint_auth_methods_supported: ["none"],
+      authorization_response_iss_parameter_supported: true,
     },
-  });
+    { headers: { "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600" } },
+  );
 }
 
 export async function OPTIONS() {
