@@ -22,26 +22,18 @@ export const SITE_TITLE = `${SITE_NAME} — ${SITE_DESCRIPTOR}`;
 export const SITE_DESCRIPTION =
   "Openfield is the open Higgsfield studio — one prompt bar for image and video across 38 Higgsfield models, Supabase sign-in, token billing via UroPay, and every finished run in one gallery.";
 
-/** Near-black cinematic ground; also the installed-app and browser-chrome color. */
 export const STUDIO_BG = "#08090a";
 
-/* The card built by scripts/build-brand-assets.mjs. It lives in public/ rather
-   than as an app/opengraph-image file on purpose: the file convention outranks
-   an explicit declaration in its own segment, so the two would disagree about
-   the alt text — the root would take it from an opengraph-image.alt.txt while
-   every route that overrides `openGraph` took it from here. One asset, one
-   declaration, one alt. */
+/* The Open Graph card is rendered by src/app/opengraph-image.tsx so its
+   identity stays in sync with the current Openfield brand. */
 export const OG_IMAGE = {
-  url: "/og.png",
+  url: "/opengraph-image",
   width: 1200,
   height: 630,
   type: "image/png",
-  alt: "The Openfield open-frame mark on a near-black field, above the Openfield wordmark, the words Open-source AI video studio, and a line describing one prompt bar for image and video with every finished run in one gallery.",
+  alt: "Openfield AI — Open-source AI video studio.",
 };
 
-/* Next replaces the whole `openGraph` (and `twitter`) object when a route
-   defines one, so a route that only wants its own url would silently drop
-   og:type, og:site_name, og:locale and the card. Overrides go through here. */
 export function openGraphFor({
   path,
   title = SITE_TITLE,
