@@ -143,3 +143,53 @@ export function verifyAccessToken(token: string, secret: string): AccessTokenPay
   if (!payload) return null;
   return payload;
 }
+
+
+export type RegisteredClient = {
+  client_id: string;
+  client_name: string;
+  redirect_uris: string[];
+  response_types: string[];
+  grant_types: string[];
+  token_endpoint_auth_method: "none";
+  application_type: "web" | "native";
+  client_uri?: string;
+};
+
+export function createClientId(
+  client: Omit<RegisteredClient, "client_id">,
+  secret: string,
+): string {
+  return signJwt(
+    {
+      typ: "mcp-client",
+      client_name: client.client_name,
+      redirect_uris: client.redirect_uris,
+      response_types: client.response_types,
+      grant_types: client.grant_types,
+      token_endpoint_auth_method: client.token_endpoint_auth_method,
+      application_type: client.application_type,
+      client_uri: client.client_uri,
+    },
+    secret,
+    60 * 60 * 24 * 365,
+  );
+}
+
+export function verifyClientId(clientId: string, secret: string): RegisteredClient | null {
+  const payload = verifyJwt(clientId, secret);
+  if (!payload || payload.typ !== "mcp-client") return null;
+  if (!Array.isArray(payload.redirect_uris) || payload.redirect_uris.some((uri) => typeof uri !== "string")) return null;
+  if (payload.token_endpoint_auth_method !== "none") return null;
+
+  return {
+    client_id: clientId,
+    client_name: typeof payload.client_name === "string" ? payload.client_name : "MCP client",
+    redirect_uris: payload.redirect_uris as string[],
+    response_types: Array.isArray(payload.response_types) ? payload.response_types.filter((v): v is string => typeof v === "string") : ["code"],
+    grant_types: Array.isArray(payload.grant_types) ? payload.grant_types.filter((v): v is string => typeof v === "string") : ["authorization_code"],
+    token_endpoint_auth_method: "none",
+    application_type: payload.application_type === "native" ? "native" : "web",
+    client_uri: typeof payload.client_uri === "string" ? payload.client_uri : undefined,
+  };
+}
