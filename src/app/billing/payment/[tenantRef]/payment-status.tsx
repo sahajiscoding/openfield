@@ -360,7 +360,7 @@ function actionsFor(
     </Link>
   );
   const newPayment = (
-    <Link href="/pricing#packs" className="of-btn of-btn--lime">
+    <Link href="/#packs" className="of-btn of-btn--lime">
       Start a new payment
     </Link>
   );
@@ -389,7 +389,7 @@ function actionsFor(
     case "failed":
       return (
         <>
-          <Link href="/pricing#packs" className="of-btn of-btn--lime">
+          <Link href="/#packs" className="of-btn of-btn--lime">
             Try again
           </Link>
           {checkButton}
@@ -408,7 +408,7 @@ function actionsFor(
       return (
         <>
           {billing}
-          <Link href="/pricing#packs" className="of-btn">
+          <Link href="/#packs" className="of-btn">
             See packs
           </Link>
         </>

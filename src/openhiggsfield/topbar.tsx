@@ -117,7 +117,7 @@ export function Topbar({
       </div>
 
       {/* The lamp is the studio's liveness: it moves only while runs are in
-          flight. Generation bills tokens on the operator key — see /pricing. */}
+          flight. Generation bills tokens on the operator key — see #pricing. */}
       <div className="ohf-bar ohf-enter-1">
         <span
           className="ohf-key"
@@ -125,7 +125,7 @@ export function Topbar({
           data-ready={true}
           role="status"
           aria-label={busy ? "Rendering runs" : "Studio ready"}
-          title="Token balance lives in the top bar — top up on /pricing"
+          title="Token balance lives in the top bar — top up at #pricing"
         >
           <span className="ohf-key-text">{busy ? "Rendering" : "Ready"}</span>
           <span className="ohf-lamp" />

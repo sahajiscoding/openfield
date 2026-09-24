@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home", icon: "⌂" },
   { href: "/studio", label: "Studio", icon: "✦" },
   { href: "/mcp", label: "MCP", icon: "◇" },
-  { href: "/pricing", label: "Pricing", icon: "$" },
+  { href: "/#pricing", label: "Pricing", icon: "$" },
   { href: "/studio/billing", label: "Billing", icon: "◷" },
   { href: "/studio/security", label: "Security", icon: "◌" },
 ] as const;
@@ -136,7 +136,7 @@ export function StudioShell({ email, balance }: { email: string | undefined; bal
           <div className="of-studio-title">Studio</div>
 
           <Link
-            href="/pricing#packs"
+            href="/#packs"
             title="Top up tokens"
             className="of-studio-balance"
             data-empty={balance <= 0 ? "true" : "false"}

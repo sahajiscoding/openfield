@@ -52,6 +52,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    // /pricing was folded into the homepage #pricing section — keep old
+    // links, bookmarks, and checkout return URLs landing somewhere useful.
+    return [{ source: "/pricing", destination: "/#pricing", permanent: true }];
+  },
 };
 
 export default nextConfig;

@@ -58,7 +58,7 @@ export function BuyPackForm({ packId, label }: { packId: string; label: string }
       {error && (
         <p className="of-error" role="alert" style={{ marginTop: 10 }}>
           {error}{" "}
-          {needsAuth && <Link href="/login?next=/pricing">Sign in →</Link>}
+          {needsAuth && <Link href="/login?next=/#packs">Sign in →</Link>}
         </p>
       )}
     </div>

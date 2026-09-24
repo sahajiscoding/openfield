@@ -115,7 +115,7 @@ export function tokensToUsd(tokens: number): number {
   return tokens / TOKENS_PER_USD;
 }
 
-/** Display rows for /pricing: 720p · 16:9 · 30s video, 1 image. */
+/** Display rows for the homepage rate card: 720p · 16:9 · 30s video, 1 image. */
 export function rateCard(): Array<{
   modelId: string;
   label: string;

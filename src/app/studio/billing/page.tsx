@@ -70,7 +70,7 @@ export default async function BillingPage({
 
         <h2 className="of-h2" style={{ fontSize: 26, marginTop: 40 }}>Order history</h2>
         {orders.length === 0 ? (
-          <p className="of-lede">No orders yet — <Link href="/pricing#packs">grab your first pack →</Link></p>
+          <p className="of-lede">No orders yet — <Link href="/#packs">grab your first pack →</Link></p>
         ) : (
           <div className="of-table" role="region" aria-label="Order history" tabIndex={0}>
             <table>
@@ -106,7 +106,7 @@ export default async function BillingPage({
               <span className="n">{p.tokens} TOKENS</span>
               <h3>₹{p.inr}</h3>
               <p>{p.blurb}</p>
-              <Link href="/pricing#packs" className="of-btn" style={{ width: "100%", justifyContent: "center", boxSizing: "border-box" }}>
+              <Link href="/#packs" className="of-btn" style={{ width: "100%", justifyContent: "center", boxSizing: "border-box" }}>
                 Buy on pricing →
               </Link>
             </article>

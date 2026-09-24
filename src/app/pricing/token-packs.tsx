@@ -6,8 +6,8 @@ import { BuyPackForm } from "./buy-form";
 /**
  * The token-pack grid — the ONLY place packs are laid out.
  *
- * Both `/` (homepage pricing section) and `/pricing` render this component
- * against the same `TOKEN_PACKS` array, so price, token count, badge, blurb,
+ * The homepage `#pricing` section and the studio billing surfaces render this
+ * component against the same `TOKEN_PACKS` array, so price, token count, badge, blurb,
  * ordering, the featured card and the button label are identical by
  * construction. The buy button posts the pack id straight from the canonical
  * list to the shared checkout endpoint (`POST /api/billing/checkout`), which

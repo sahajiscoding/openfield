@@ -468,7 +468,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
 
           <div className="of-mcp-v2-tool-doc">
             <code>openfield_pricing</code>
-            <p>Token packs + per-model costs. Mirrors /pricing.</p>
+            <p>Token packs + per-model costs. Mirrors the homepage #pricing section.</p>
             <pre>{`{
   "jsonrpc": "2.0",
   "id": 2,

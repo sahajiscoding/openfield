@@ -5,9 +5,9 @@
  * token count, badge, description, ordering, the highlighted card and the
  * button label all live here, and every surface that shows packs renders
  * `TokenPacksGrid` (src/app/pricing/token-packs.tsx), which reads this list.
- * The landing page and /pricing therefore cannot drift apart: editing one
- * array changes both, and changing a pack's order or badge here changes the
- * order and badge everywhere.
+ * The homepage `#pricing` section and the studio surfaces therefore cannot
+ * drift apart: editing one array changes both, and changing a pack's order
+ * or badge here changes the order and badge everywhere.
  *
  * Money movement stays server-side: the checkout action only accepts an id
  * from this file (getPack) and re-reads tokens/amount from these values, so a

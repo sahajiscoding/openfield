@@ -11,7 +11,7 @@ import { DEVICE_COOKIE, DEVICE_COOKIE_OPTIONS, resolveDeviceId } from "./generat
  * PERFORMANCE CONTRACT — the auth round trip is conditional on purpose.
  * `supabase.auth.getUser()` is a NETWORK call to the Supabase Auth server, and
  * this middleware sits in front of every page render. Doing it unconditionally
- * put a round trip in front of `/`, `/pricing` and every other public page, and
+ * put a round trip in front of `/`, `/#pricing` and every other public page, and
  * it was one of the hops stacked in front of `/studio`.
  *
  * So the check runs only where it changes the outcome:

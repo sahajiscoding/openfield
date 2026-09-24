@@ -66,7 +66,7 @@ export default function McpPublicPage() {
                 <Link href="/studio" className="of-btn of-btn--lime">
                   Open the studio →
                 </Link>
-                <Link href="/pricing" className="of-btn">
+                <Link href="/#pricing" className="of-btn">
                   See token rates
                 </Link>
               </div>
@@ -93,7 +93,7 @@ export default function McpPublicPage() {
           <a href="https://github.com/sahajiscoding/openfield" rel="noopener">
             GitHub
           </a>
-          <Link href="/pricing">Pricing</Link>
+          <Link href="/#pricing">Pricing</Link>
           <Link href="/mcp">MCP</Link>
           <Link href="/studio">Studio</Link>
         </span>

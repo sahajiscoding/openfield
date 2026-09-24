@@ -3,9 +3,12 @@ import Link from "next/link";
 
 import { ComposerMock } from "./composer-mock";
 import { LandingNav } from "./nav";
+import { ModelRates } from "./model-rates";
 import { TokenPacksGrid } from "./pricing/token-packs";
 import { Reveal } from "./reveal";
 import "./landing.css";
+
+import { rateCard } from "@/lib/credits/pricing";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -32,6 +35,7 @@ const FX = [
 ];
 
 export default function LandingPage() {
+  const rates = rateCard();
   return (
     <div className="of-landing">
       <LandingNav />
@@ -48,10 +52,10 @@ export default function LandingPage() {
             </p>
             <div className="of-cta-row">
               <Link href="/studio" className="of-btn of-btn--lime">Start creating — it&apos;s open</Link>
-              <Link href="/pricing" className="of-btn">See token rates</Link>
+              <Link href="/#pricing" className="of-btn">See token rates</Link>
             </div>
             <div className="of-meta-row" aria-label="Studio facts">
-              <span><b>38</b> Higgsfield models</span>
+              <span><b>44</b> Higgsfield models</span>
               <span><b>1¢</b> per token</span>
               <span><b>≤2s</b> first paint</span>
               <span><b>100%</b> MIT</span>
@@ -121,7 +125,7 @@ export default function LandingPage() {
           </Reveal>
           <div className="of-split">
             <Reveal as="article" className="of-card"><span className="n">HIGGSFIELD API</span><h3>Submit → poll → bloom</h3><p><code>POST /&#123;model&#125;</code> then <code>GET /requests/&#123;id&#125;/status</code> under the operator key. Server actions are the only caller — the browser never touches provider credentials.</p></Reveal>
-            <Reveal as="article" className="of-card" delay={90}><span className="n">TOKENS</span><h3>Spend on submit, refund on failure</h3><p>Cost quotes derive from the official $/sec rate card at 100 tokens per $1. Balance in the top bar, history on <code>/studio/billing</code>. <Link href="/pricing">Full rate card →</Link></p></Reveal>
+            <Reveal as="article" className="of-card" delay={90}><span className="n">TOKENS</span><h3>Spend on submit, refund on failure</h3><p>Cost quotes derive from the official $/sec rate card at 100 tokens per $1. Balance in the top bar, history on <code>/studio/billing</code>. <Link href="/#pricing">Full rate card →</Link></p></Reveal>
           </div>
         </section>
 
@@ -129,9 +133,12 @@ export default function LandingPage() {
           <Reveal><p className="of-kicker">Pricing</p></Reveal>
           <Reveal><h2 id="pricing-h" className="of-h2">No subscriptions. <span style={{ color: "var(--of-lime)" }}>Just tokens.</span></h2></Reveal>
           <Reveal><p className="of-lede">1 token = $0.01 of Higgsfield API cost. Top up with UroPay direct-UPI, spend per generation, refund on failure.</p></Reveal>
-          {/* Same component, same data as /pricing — packs cannot drift. */}
           <TokenPacksGrid />
-          <p className="of-pack-note"><Link href="/pricing">Full rate card + FAQ →</Link></p>
+          <p className="of-pack-note">Secure checkout via <strong>UroPay</strong> — pay on the hosted page, tokens land automatically. They never expire.</p>
+          <Reveal><p className="of-kicker">Rate card</p></Reveal>
+          <Reveal><h3 className="of-h2" style={{ fontSize: "clamp(26px,3vw,36px)" }}>Every model, quoted the same way.</h3></Reveal>
+          <Reveal><p className="of-lede">Video rows: 720p · 16:9 · 30 seconds. Image rows: 1 image. Rates mirror the official Higgsfield API card (100 tokens per $1).</p></Reveal>
+          <ModelRates rates={rates} />
         </section>
 
         <section id="open-source" className="of-wrap of-section" aria-labelledby="oss-h">
@@ -152,7 +159,7 @@ export default function LandingPage() {
               <p>Sign in, grab tokens, and ship your first Seedance run in under a minute. Pay per second, never per month.</p>
               <div className="of-cta-row">
                 <Link href="/studio" className="of-btn of-btn--lime">Open the studio →</Link>
-                <Link href="/pricing" className="of-btn">Pricing</Link>
+                <Link href="/#pricing" className="of-btn">Pricing</Link>
               </div>
             </div>
             <div className="of-composer-mock" aria-hidden>
@@ -168,7 +175,7 @@ export default function LandingPage() {
         <span>© 2026 Openfield · MIT · An open Higgsfield alternative</span>
         <span className="right">
           <a href="https://github.com/sahajiscoding/openfield" rel="noopener">GitHub</a>
-          <Link href="/pricing">Pricing</Link>
+          <Link href="/#pricing">Pricing</Link>
           <Link href="/studio">Studio</Link>
         </span>
       </footer>

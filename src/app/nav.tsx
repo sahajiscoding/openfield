@@ -1,11 +1,11 @@
 import Link from "next/link";
 
 /**
- * Shared landing nav — identical on `/` and `/pricing` so section links
- * (Effects, Models) never disappear when navigating between the two.
- * Section anchors are root-relative (`/#effects`) so they work from any page.
+ * Shared landing nav. Section anchors are root-relative (`/#effects`) so
+ * they work from any page — Pricing lives in the homepage `#pricing`
+ * section, there is no separate /pricing route.
  */
-export function LandingNav({ current }: { current?: "pricing" | "mcp" }) {
+export function LandingNav({ current }: { current?: "mcp" }) {
   return (
     <header className="of-nav">
       <div className="of-wrap of-nav-inner">
@@ -19,7 +19,7 @@ export function LandingNav({ current }: { current?: "pricing" | "mcp" }) {
           <Link href="/#how">How it works</Link>
           <Link href="/#effects">Effects</Link>
           <Link href="/#models">Models</Link>
-          <Link href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>
+          <Link href="/#pricing">
             Pricing
           </Link>
           <Link href="/mcp" aria-current={current === "mcp" ? "page" : undefined}>
