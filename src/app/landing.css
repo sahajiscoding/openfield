@@ -1044,16 +1044,25 @@
 }
 
 .of-feat-rail {
-  display: flex;
-  gap: 14px;
+  display: block;
   overflow-x: auto;
   padding: 4px 2px 10px;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: 2px;
   scrollbar-width: none;
   -ms-overflow-style: none;
   -webkit-mask-image: linear-gradient(to right, transparent 0, black 28px, black calc(100% - 28px), transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, black 28px, black calc(100% - 28px), transparent 100%);
+}
+
+/* Two identical copies for the seamless wrap-around drift. */
+.of-feat-track {
+  display: flex;
+  width: max-content;
+}
+
+.of-feat-copy {
+  display: flex;
+  gap: 18px;
+  padding-right: 18px;
 }
 
 .of-feat-rail::-webkit-scrollbar {

@@ -4,6 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { FEATURED, type FeaturedItem } from "./featured-media";
 
+/* Continuous rightward drift — the opposite direction of the model-name
+   marquee above it (which scrolls left). */
+const DRIFT_PX_PER_SEC = 45;
+const RESUME_AFTER_MANUAL_MS = 3000;
+const RESUME_AFTER_HOVER_MS = 1500;
+
 function FeaturedVideo({
   poster,
   src,
@@ -110,74 +116,74 @@ function FeaturedCard({ item, pausedAll }: { item: FeaturedItem; pausedAll: bool
 
 export function FeaturedRail() {
   const railRef = useRef<HTMLDivElement | null>(null);
-  const sectionRef = useRef<HTMLElement | null>(null);
   const [pausedAll, setPausedAll] = useState(false);
   const pausedRef = useRef(pausedAll);
   pausedRef.current = pausedAll;
   const hoveringRef = useRef(false);
-  const lastAdvanceRef = useRef(0);
+  const resumeAtRef = useRef(0);
 
   const scrollByCard = useCallback((dir: 1 | -1) => {
     const rail = railRef.current;
     if (!rail) return;
-    lastAdvanceRef.current = Date.now();
+    resumeAtRef.current = Date.now() + RESUME_AFTER_MANUAL_MS;
     const card = rail.querySelector<HTMLElement>(".of-feat-item");
     const step = card ? card.offsetWidth + 18 : Math.round(rail.clientWidth * 0.8);
-    const atEnd = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 24;
-    const atStart = rail.scrollLeft <= 24;
-    if (dir === 1 && atEnd) {
-      rail.scrollTo({ left: 0, behavior: "smooth" });
-    } else if (dir === -1 && atStart) {
-      rail.scrollTo({ left: rail.scrollWidth, behavior: "smooth" });
-    } else {
-      rail.scrollBy({ left: dir * step, behavior: "smooth" });
-    }
+    rail.scrollBy({ left: dir * step, behavior: "smooth" });
   }, []);
 
-  /* Automatic slider: advance one card every 4s, looping back to start.
-     Pauses when the user hovers/focuses the rail, hits the global pause
-     toggle, switches tabs, or prefers reduced motion. */
+  /* Continuous auto-slider: the rail holds two identical copies and drifts
+     rightward, wrapping seamlessly. Pauses while hovered/focused, while the
+     global pause toggle is on, when the tab is hidden, or under reduced
+     motion (no drift at all — arrows still work). */
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => {
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
       const rail = railRef.current;
-      if (!rail || pausedRef.current || hoveringRef.current || document.hidden) return;
-      if (Date.now() - lastAdvanceRef.current < 4000) return;
-      lastAdvanceRef.current = Date.now();
-      const card = rail.querySelector<HTMLElement>(".of-feat-item");
-      const step = card ? card.offsetWidth + 18 : Math.round(rail.clientWidth * 0.8);
-      if (rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 24) {
-        rail.scrollTo({ left: 0, behavior: "smooth" });
-      } else {
-        rail.scrollBy({ left: step, behavior: "smooth" });
+      if (
+        rail &&
+        !pausedRef.current &&
+        !hoveringRef.current &&
+        !document.hidden &&
+        Date.now() >= resumeAtRef.current
+      ) {
+        const half = rail.scrollWidth / 2;
+        if (half > rail.clientWidth) {
+          let next = rail.scrollLeft - DRIFT_PX_PER_SEC * dt;
+          if (next <= 0) next += half;
+          rail.scrollLeft = next;
+        }
       }
-    }, 1000);
-    return () => window.clearInterval(id);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   const items: FeaturedItem[] = Array.isArray(FEATURED) ? FEATURED : [];
   if (items.length === 0) return null;
 
+  const unhover = () => {
+    hoveringRef.current = false;
+    resumeAtRef.current = Date.now() + RESUME_AFTER_HOVER_MS;
+  };
+
   return (
     <section
-      ref={sectionRef}
       className="of-feat"
       aria-labelledby="of-feat-h"
       onMouseEnter={() => {
         hoveringRef.current = true;
       }}
-      onMouseLeave={() => {
-        hoveringRef.current = false;
-        lastAdvanceRef.current = Date.now();
-      }}
+      onMouseLeave={unhover}
       onFocusCapture={() => {
         hoveringRef.current = true;
       }}
-      onBlurCapture={() => {
-        hoveringRef.current = false;
-        lastAdvanceRef.current = Date.now();
-      }}
+      onBlurCapture={unhover}
     >
       <div className="of-wrap of-feat-head">
         <p className="of-kicker of-feat-kicker">Featured</p>
@@ -213,9 +219,18 @@ export function FeaturedRail() {
         </div>
       </div>
       <div ref={railRef} className="of-feat-rail" role="region" aria-label="Featured models carousel" tabIndex={0}>
-        {items.map((item) => (
-          <FeaturedCard key={item.id} item={item} pausedAll={pausedAll} />
-        ))}
+        <div className="of-feat-track">
+          <div className="of-feat-copy">
+            {items.map((item) => (
+              <FeaturedCard key={item.id} item={item} pausedAll={pausedAll} />
+            ))}
+          </div>
+          <div className="of-feat-copy" aria-hidden="true" inert>
+            {items.map((item) => (
+              <FeaturedCard key={`dup-${item.id}`} item={item} pausedAll={pausedAll} />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
