@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ComposerMock } from "./composer-mock";
+import { CreatorBlock } from "./creator-block";
+import { FeaturedRail } from "./featured";
 import { LandingNav } from "./nav";
 import { ModelRates } from "./model-rates";
 import { TokenPacksGrid } from "./pricing/token-packs";
@@ -280,6 +282,10 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
+
+        <FeaturedRail />
+
+        <CreatorBlock />
 
         <section id="how" className="of-wrap of-section" aria-labelledby="how-h">
           <Reveal><p className="of-kicker">How it works</p></Reveal>
