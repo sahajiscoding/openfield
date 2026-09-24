@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { creditPaidOrder } from "@/lib/billing/confirm";
-import { claimWebhookEvent, findOrderByTenantRef, setOrderStatus } from "@/lib/credits/wallet";
+import {
+  claimWebhookEvent,
+  findOrderByTenantRef,
+  mapProviderStatus,
+  pruneWebhookEvents,
+  setOrderStatus,
+} from "@/lib/credits/wallet";
 import { getUropayOrder, verifyUropayWebhook } from "@/lib/uropay/client";
 
 /**
@@ -52,6 +58,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!(await claimWebhookEvent(event.eventId))) {
       return NextResponse.json({ ok: true, deduped: true });
     }
+    // Opportunistic retention: keep the replay-guard table bounded. Fire and
+    // forget — prune failures are logged inside, never fail the webhook.
+    void pruneWebhookEvents().catch(() => {});
   } catch {
     return NextResponse.json({ error: "store unavailable" }, { status: 500 });
   }
@@ -68,20 +77,25 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     if (row.status === "paid") return NextResponse.json({ ok: true, already: true });
 
-    // Authoritative lookup before moving money.
+    // Authoritative lookup before moving money. The webhook body is only a
+    // wake-up call: whatever it claims, the GET result below is what the row
+    // is reconciled with. A mismatch is logged for diagnostics but never
+    // drops the update — otherwise a webhook that arrives ahead of provider
+    // propagation (common in TEST) would stall the order until a poll.
+    //
+    // The mapping is the shared mapProviderStatus from wallet.ts — the same
+    // one the status poll uses — so both paths agree on what PENDING,
+    // COMPLETED, or an unknown provider string means. (The strict local
+    // normalizeStatus above stays for the webhook body itself, where an
+    // unrecognized status is a 400.)
     const order = await getUropayOrder(event.orderId);
-    const authoritative = normalizeStatus(order.status);
-    if (!authoritative) {
-      console.error("[billing] unknown authoritative status", { status: order.status });
-      return NextResponse.json({ ok: true, recorded: order.status });
-    }
+    const authoritative = mapProviderStatus(order.status);
     if (authoritative !== webhookStatus) {
-      console.error("[billing] webhook/authoritative status mismatch", {
+      console.error("[billing] webhook/authoritative status mismatch — trusting authoritative", {
         tenantRef: row.tenant_ref,
         webhookStatus,
         authoritative,
       });
-      return NextResponse.json({ ok: true, mismatch: true });
     }
     if (authoritative !== "paid") {
       await setOrderStatus(row.tenant_ref, authoritative).catch(() => {});

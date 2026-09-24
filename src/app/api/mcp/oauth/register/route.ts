@@ -75,6 +75,17 @@ export async function POST(request: Request) {
       : "MCP client";
   const clientUri = typeof body.client_uri === "string" ? body.client_uri : undefined;
 
+  let secret: string;
+  try {
+    secret = getOAuthSecret();
+  } catch (caught) {
+    console.error("[oauth] register failed", caught instanceof Error ? caught.message : caught);
+    return NextResponse.json(
+      { error: "server_error", error_description: "OAuth is not configured — try again later." },
+      { status: 500, headers: corsHeaders },
+    );
+  }
+
   const clientId = createClientId(
     {
       client_name: clientName,
@@ -85,7 +96,7 @@ export async function POST(request: Request) {
       application_type: applicationType,
       client_uri: clientUri,
     },
-    getOAuthSecret(),
+    secret,
   );
 
   const base = getBaseUrl(request);

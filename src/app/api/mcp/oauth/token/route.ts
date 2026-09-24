@@ -4,7 +4,16 @@ import { getOAuthSecret, verifyAuthorizationCode, createAccessToken } from "@/li
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const secret = getOAuthSecret();
+  let secret: string;
+  try {
+    secret = getOAuthSecret();
+  } catch (caught) {
+    console.error("[oauth] token failed", caught instanceof Error ? caught.message : caught);
+    return NextResponse.json(
+      { error: "server_error", error_description: "OAuth is not configured — try again later." },
+      { status: 500 },
+    );
+  }
 
   let params: Record<string, string> = {};
   const contentType = request.headers.get("content-type") || "";

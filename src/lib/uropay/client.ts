@@ -149,7 +149,8 @@ export type UropayWebhookEvent = {
 /**
  * Verify an inbound tenant webhook. Signed with the SEPARATE webhook secret
  * over POST /tenant-webhook + empty query + the RAW body bytes; enforce the
- * 5-minute replay window and compare in constant time (MUN parity).
+ * spec's replay window (reject >300s old or >30s in the future) and compare
+ * in constant time (MUN parity).
  */
 export function verifyUropayWebhook(headers: Headers, rawBody: string): UropayWebhookEvent {
   const secret = webhookSecret();
@@ -160,8 +161,16 @@ export function verifyUropayWebhook(headers: Headers, rawBody: string): UropayWe
 
   const ts = Number(timestamp);
   const now = Math.floor(Date.now() / 1000);
-  if (!Number.isFinite(ts) || ts <= 0 || Math.abs(now - ts) > 300) {
+  if (!Number.isFinite(ts) || ts <= 0 || now - ts > 300 || ts - now > 30) {
     throw new Error("Stale webhook timestamp.");
+  }
+
+  // Soft merchant check: the HMAC above is the real authentication, but a key
+  // that is present yet unexpected is worth a log line (rotation/typo signal).
+  const apiKey = headers.get("x-api-key") ?? "";
+  const expectedKey = process.env.UROPAY_API_KEY?.trim();
+  if (apiKey && expectedKey && apiKey !== expectedKey) {
+    console.error("[billing] webhook API key mismatch");
   }
 
   const canonical = ["POST", "/tenant-webhook", timestamp, nonce, "", rawBody].join("\n");

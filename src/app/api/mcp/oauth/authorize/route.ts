@@ -49,7 +49,16 @@ export async function GET(request: Request) {
   const state = url.searchParams.get("state") || "";
   const code_challenge = url.searchParams.get("code_challenge") || "";
   const code_challenge_method = url.searchParams.get("code_challenge_method") || "S256";
-  const secret = getOAuthSecret();
+  let secret: string;
+  try {
+    secret = getOAuthSecret();
+  } catch (caught) {
+    console.error("[oauth] authorize failed", caught instanceof Error ? caught.message : caught);
+    return new NextResponse(
+      htmlPage(`<p class="kicker">Error</p><h1>OAuth unavailable</h1><p>Sign-in with Openfield is not configured right now — try again later.</p>`),
+      { status: 500, headers: { "Content-Type": "text/html", "Cache-Control": "no-store" } }
+    );
+  }
   const client = verifyClientId(client_id, secret);
 
   // Validate required params
@@ -145,7 +154,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const base = getBaseUrl(request);
-  const secret = getOAuthSecret();
+  let secret: string;
+  try {
+    secret = getOAuthSecret();
+  } catch (caught) {
+    console.error("[oauth] consent failed", caught instanceof Error ? caught.message : caught);
+    return new NextResponse("OAuth is not configured — try again later.", { status: 500 });
+  }
 
   // Parse form body
   const contentType = request.headers.get("content-type") || "";

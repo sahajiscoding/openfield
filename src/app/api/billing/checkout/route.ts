@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { buyTokenPack } from "@/lib/billing/actions";
+import { isAllowedOrigin } from "@/lib/rate-limit";
 
 /**
  * Hosted checkout: returns { openUrl } for the UroPay payment page.
  * Failures arrive as readable { error } strings.
  */
 export async function POST(request: Request): Promise<NextResponse> {
+  if (!isAllowedOrigin(request)) {
+    return NextResponse.json({ error: "Cross-site request refused." }, { status: 403 });
+  }
   let packId: unknown;
   try {
     packId = ((await request.json()) as { packId?: unknown }).packId;

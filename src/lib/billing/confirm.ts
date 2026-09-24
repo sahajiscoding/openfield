@@ -62,7 +62,14 @@ export async function creditPaidOrder(order: ConfirmableOrder, userId: string): 
     // Already credited earlier (webhook, or a poll that got here first).
     console.info("[billing] grant deduped", { tenantRef: order.tenant_ref });
   }
-  await markOrderPaid(order.id, order.uropay_order_id ?? "");
+  const marked = await markOrderPaid(order.id, order.uropay_order_id ?? "");
+  if (!marked) {
+    // Tokens are granted (or deduped) but the row did not move to paid — most
+    // likely it already reads paid. Loud in logs so a stuck row is visible.
+    console.error("[billing] grant succeeded but row did not mark paid", {
+      tenantRef: order.tenant_ref,
+    });
+  }
 }
 
 /**

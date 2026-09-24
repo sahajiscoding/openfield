@@ -22,8 +22,37 @@ export function getBaseUrl(req?: Request): string {
   return DEFAULT_ISSUER;
 }
 
+/**
+ * Signing key for MCP authorization codes, access tokens, and client ids.
+ *
+ * Fail-closed in production: falling back to the Supabase service key would
+ * repurpose a database credential as a JWT key, and the hardcoded dev string
+ * is public to anyone who read this repo — either would let an attacker forge
+ * MCP tokens. In development the fallbacks below keep `npm run dev` working
+ * with a loud warning.
+ */
 export function getOAuthSecret(): string {
-  return process.env.OAUTH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "openfield-dev-oauth-secret-please-set-OAUTH_SECRET";
+  const raw = process.env.OAUTH_SECRET?.trim().replace(/^["']|["']$/g, "").trim();
+  if (raw) {
+    if (raw.length < 32) {
+      console.warn("[oauth] OAUTH_SECRET is set but shorter than 32 characters — use 32+ random bytes.");
+    }
+    return raw;
+  }
+  const prod =
+    process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+  if (prod) {
+    throw new Error(
+      "Server misconfigured: set OAUTH_SECRET (32+ random bytes) in Vercel and redeploy.",
+    );
+  }
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (service) {
+    console.warn("[oauth] OAUTH_SECRET unset — dev-only fallback to the service key. Set OAUTH_SECRET.");
+    return service;
+  }
+  console.warn("[oauth] OAUTH_SECRET unset — dev-only fallback to an insecure placeholder. Set OAUTH_SECRET.");
+  return "openfield-dev-oauth-secret-please-set-OAUTH_SECRET";
 }
 
 function base64urlEncode(input: Buffer | string): string {

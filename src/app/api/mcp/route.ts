@@ -79,9 +79,16 @@ export async function POST(request: Request) {
   if (!directError && directData.user) {
     userId = directData.user.id;
   } else {
-    // Try to verify as our OAuth JWT access token
-    const secret = getOAuthSecret();
-    const oauthPayload = verifyAccessToken(token, secret);
+    // Try to verify as our OAuth JWT access token. A missing secret fails
+    // closed here (no OAuth verification possible) without breaking callers
+    // that present a plain Supabase token — those already passed above.
+    let oauthPayload: ReturnType<typeof verifyAccessToken> = null;
+    try {
+      oauthPayload = verifyAccessToken(token, getOAuthSecret());
+    } catch (caught) {
+      console.error("[mcp] OAuth unavailable", caught instanceof Error ? caught.message : caught);
+      oauthPayload = null;
+    }
     if (oauthPayload && oauthPayload.supabase_token) {
       supabaseToken = oauthPayload.supabase_token;
       const { data: oauthData, error: oauthError } = await serviceClient().auth.getUser(supabaseToken);

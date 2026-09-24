@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { pollOrderStatus } from "@/lib/billing/actions";
+import { isAllowedOrigin } from "@/lib/rate-limit";
 
 /**
  * Poll authoritative UroPay status for our tenant ref. Credits idempotently
  * when the provider reports COMPLETED (covers missed webhooks).
  */
 export async function GET(request: Request): Promise<NextResponse> {
+  if (!isAllowedOrigin(request)) {
+    return NextResponse.json({ error: "Cross-site request refused." }, { status: 403 });
+  }
   const url = new URL(request.url);
   const ref = url.searchParams.get("ref")?.trim();
   if (!ref) return NextResponse.json({ error: "Missing ?ref= order reference." }, { status: 400 });

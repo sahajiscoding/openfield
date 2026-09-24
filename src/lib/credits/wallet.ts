@@ -376,17 +376,19 @@ export async function setOrderStatus(tenantRef: string, status: string): Promise
 }
 
 /**
- * Confirm payment. Accepts the QR-lifecycle pre-paid states — NOT just
- * "pending": by credit time the row is usually "utr_submitted" (UTR pasted)
- * or "review" (SMS timeout), and restricting to "pending" silently skipped
- * the update while tokens had already been granted.
+ * Confirm payment. Accepts every non-paid state — NOT just the pre-paid
+ * ones: a row may already read "failed"/"expired"/"cancelled" from an older
+ * webhook or poll when the provider authoritatively reports PAID later, and
+ * refusing that transition granted tokens while leaving the row stuck as
+ * failed. The only state this never leaves is "paid" itself (re-credit is
+ * refused by the ledger's unique ref, and the row is already correct).
  */
 export async function markOrderPaid(orderId: string, uropayOrderId: string): Promise<boolean> {
   const { data, error } = await adminClient()
     .from("uropay_orders")
     .update({ status: "paid", paid_at: new Date().toISOString(), uropay_order_id: uropayOrderId })
     .eq("id", orderId)
-    .in("status", ["pending", "utr_submitted", "review"])
+    .in("status", ["pending", "utr_submitted", "review", "failed", "expired", "cancelled"])
     .select("id");
   if (error) {
     if (isPermissionFailure(error)) throw billingPermissionError();
@@ -411,4 +413,25 @@ export async function claimWebhookEvent(eventId: string): Promise<boolean> {
     throw new Error("Database table missing — run migrations 002 and 005 in Supabase SQL Editor, then retry.");
   }
   throw new Error("Could not record webhook event.");
+}
+
+/**
+ * Retention for the webhook replay-guard table: one row per delivery group
+ * accumulates forever otherwise. Duplicates only arrive within minutes of the
+ * original (provider retries), so anything older than `olderThanDays` is
+ * safe to drop. Best-effort — a failure is logged, never thrown.
+ */
+export async function pruneWebhookEvents(olderThanDays = 30): Promise<number> {
+  const days = Number.isFinite(olderThanDays) && olderThanDays > 0 ? Math.floor(olderThanDays) : 30;
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await adminClient()
+    .from("uropay_events")
+    .delete()
+    .lt("received_at", cutoff)
+    .select("event_id");
+  if (error) {
+    console.error("[billing] webhook prune failed", error.message.slice(0, 120));
+    return 0;
+  }
+  return data?.length ?? 0;
 }

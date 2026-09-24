@@ -51,3 +51,38 @@ export function clientIpFromHeaders(headers: Headers): string {
   if (forwarded) return forwarded.split(",")[0]!.trim().slice(0, 64);
   return (headers.get("x-real-ip") ?? "unknown").slice(0, 64);
 }
+
+/**
+ * Same-origin guard for cookie-authenticated route handlers (CSRF).
+ *
+ * Compares the Origin header (falling back to Referer) against the deployed
+ * site host. Requests with neither header (curl, server-to-server, some
+ * privacy modes) are allowed through — they carry no ambient authority to
+ * abuse and the session cookie is what matters. A present-but-foreign origin
+ * is a cross-site forgery attempt and is refused.
+ */
+export function isAllowedOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const candidate = (origin ?? referer ?? "").trim();
+  if (!candidate) return true;
+  let candidateHost = "";
+  try {
+    candidateHost = new URL(candidate).host.toLowerCase();
+  } catch {
+    return false;
+  }
+  // Same-origin = the page that sent the request lives on this host.
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = (forwardedHost ?? request.headers.get("host") ?? "").split(",")[0]!.trim().toLowerCase();
+  if (host && candidateHost === host) return true;
+  // Otherwise fall back to the canonical site URL (covers proxies that
+  // rewrite Host, and keeps localhost dev working).
+  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim();
+  if (!site) return true; // Unconfigured: nothing to compare against.
+  try {
+    return candidateHost === new URL(site).host.toLowerCase();
+  } catch {
+    return true;
+  }
+}
