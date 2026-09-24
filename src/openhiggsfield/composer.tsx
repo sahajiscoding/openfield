@@ -93,7 +93,6 @@ export function Composer({
   const [overlay, setOverlay] = useState<string | null>(null);
   const [anchor, setAnchor] = useState({ x: 0, y: 0 });
   const [shortcut, setShortcut] = useState<string | null>(null);
-  const dockRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   /* A run in flight is not a lock: it holds its own tile in the grid, so the
@@ -119,19 +118,6 @@ export function Composer({
     }
     settings.set(model.id, { [native.key]: native.kind === "enum" ? String(next) : next });
   }
-
-  /* The dock floats over the gallery, so the gallery cannot reserve its height
-     from layout. It reads it from here instead, and the last row keeps clearing
-     a composer that grew — a long prompt, a media strip, the undo receipt. */
-  useEffect(() => {
-    const dock = dockRef.current;
-    if (!dock) return;
-    const observer = new ResizeObserver(() => {
-      dock.parentElement?.style.setProperty("--ohf-dock-h", `${dock.offsetHeight}px`);
-    });
-    observer.observe(dock);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (!overlay) return;
@@ -225,7 +211,7 @@ export function Composer({
       : `${generateLabel} · ${shortcut ?? "⌘↵"}`;
 
   return (
-    <div className="ohf-dock" ref={dockRef} data-selecting={selecting}>
+    <div className="ohf-dock" data-selecting={selecting}>
       <div
         className="ohf-composer-wrap ohf-enter-2"
         ref={wrapRef}

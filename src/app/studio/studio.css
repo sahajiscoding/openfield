@@ -31,9 +31,19 @@
   display: flex;
 }
 
+/* The studio surface is the frame's last elastic row, and a column of its own:
+   top bar, gallery, composer. It has to be told so — a plain block here left
+   `.ohf-shell` at its content height, which collapsed the surface to ~620px on
+   a 1440×900 window and stranded the bottom-pinned composer ~260px above the
+   real bottom edge, over a band of empty ground. As a column flex container the
+   shell stretches to the frame, the gallery takes what is left over it, and the
+   composer lands on the bottom edge at every viewport size. */
 .of-studio-app > .ohf {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .of-studio-workspace > .ohf {
