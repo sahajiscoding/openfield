@@ -117,9 +117,6 @@ export function CreatorBlock() {
               }}
             />
             <div className="of-create-bar">
-              <span className="of-create-attach" aria-hidden="true">
-                ⌁
-              </span>
               <span className="of-create-model">
                 {active.modelLabel} <span aria-hidden="true">›</span>
               </span>
