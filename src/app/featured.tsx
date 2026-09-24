@@ -110,21 +110,75 @@ function FeaturedCard({ item, pausedAll }: { item: FeaturedItem; pausedAll: bool
 
 export function FeaturedRail() {
   const railRef = useRef<HTMLDivElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const [pausedAll, setPausedAll] = useState(false);
+  const pausedRef = useRef(pausedAll);
+  pausedRef.current = pausedAll;
+  const hoveringRef = useRef(false);
+  const lastAdvanceRef = useRef(0);
 
   const scrollByCard = useCallback((dir: 1 | -1) => {
     const rail = railRef.current;
     if (!rail) return;
+    lastAdvanceRef.current = Date.now();
     const card = rail.querySelector<HTMLElement>(".of-feat-item");
     const step = card ? card.offsetWidth + 18 : Math.round(rail.clientWidth * 0.8);
-    rail.scrollBy({ left: dir * step, behavior: "smooth" });
+    const atEnd = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 24;
+    const atStart = rail.scrollLeft <= 24;
+    if (dir === 1 && atEnd) {
+      rail.scrollTo({ left: 0, behavior: "smooth" });
+    } else if (dir === -1 && atStart) {
+      rail.scrollTo({ left: rail.scrollWidth, behavior: "smooth" });
+    } else {
+      rail.scrollBy({ left: dir * step, behavior: "smooth" });
+    }
+  }, []);
+
+  /* Automatic slider: advance one card every 4s, looping back to start.
+     Pauses when the user hovers/focuses the rail, hits the global pause
+     toggle, switches tabs, or prefers reduced motion. */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      const rail = railRef.current;
+      if (!rail || pausedRef.current || hoveringRef.current || document.hidden) return;
+      if (Date.now() - lastAdvanceRef.current < 4000) return;
+      lastAdvanceRef.current = Date.now();
+      const card = rail.querySelector<HTMLElement>(".of-feat-item");
+      const step = card ? card.offsetWidth + 18 : Math.round(rail.clientWidth * 0.8);
+      if (rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 24) {
+        rail.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        rail.scrollBy({ left: step, behavior: "smooth" });
+      }
+    }, 1000);
+    return () => window.clearInterval(id);
   }, []);
 
   const items: FeaturedItem[] = Array.isArray(FEATURED) ? FEATURED : [];
   if (items.length === 0) return null;
 
   return (
-    <section className="of-feat" aria-labelledby="of-feat-h">
+    <section
+      ref={sectionRef}
+      className="of-feat"
+      aria-labelledby="of-feat-h"
+      onMouseEnter={() => {
+        hoveringRef.current = true;
+      }}
+      onMouseLeave={() => {
+        hoveringRef.current = false;
+        lastAdvanceRef.current = Date.now();
+      }}
+      onFocusCapture={() => {
+        hoveringRef.current = true;
+      }}
+      onBlurCapture={() => {
+        hoveringRef.current = false;
+        lastAdvanceRef.current = Date.now();
+      }}
+    >
       <div className="of-wrap of-feat-head">
         <p className="of-kicker of-feat-kicker">Featured</p>
         <h2 id="of-feat-h" className="of-feat-title-h">
@@ -136,7 +190,7 @@ export function FeaturedRail() {
             className="of-feat-arrow-btn"
             onClick={() => setPausedAll((p) => !p)}
             aria-pressed={pausedAll}
-            aria-label={pausedAll ? "Play all preview videos" : "Pause all preview videos"}
+            aria-label={pausedAll ? "Play auto-slider and preview videos" : "Pause auto-slider and preview videos"}
           >
             <span aria-hidden="true">{pausedAll ? "▶" : "⏸"}</span>
           </button>
