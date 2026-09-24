@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ComposerMock } from "./composer-mock";
 import { CreatorBlock } from "./creator-block";
 import { FeaturedRail } from "./featured";
 import { LandingNav } from "./nav";
@@ -251,30 +250,6 @@ export default function LandingPage() {
       <LandingNav />
 
       <main>
-        <section className="of-wrap of-hero" aria-labelledby="hero-h">
-          <div>
-            <span className="of-eyebrow"><span className="dot" aria-hidden /> $50K Higgsfield-challenge entry · MIT</span>
-            <h1 id="hero-h" className="of-h1">The open studio for <em>cinematic</em> <span className="of-hero-ai">AI</span> videos.</h1>
-            <p className="of-sub">
-              Openfield is the open Higgsfield client — <strong>one prompt bar</strong>, per-model settings,
-              every finished run in one gallery — behind <strong>Supabase sign-in</strong>.
-              Top up tokens once. Generate by the second.
-            </p>
-            <div className="of-cta-row">
-              <Link href="/studio" className="of-btn of-btn--lime">Start creating — it&apos;s open</Link>
-              <Link href="/#pricing" className="of-btn">See token rates</Link>
-            </div>
-            <div className="of-meta-row" aria-label="Studio facts">
-              <span><b>44</b> Higgsfield models</span>
-              <span><b>1¢</b> per token</span>
-              <span><b>≤2s</b> first paint</span>
-              <span><b>100%</b> MIT</span>
-            </div>
-          </div>
-
-          <ComposerMock />
-        </section>
-
         <div className="of-marquee" aria-hidden>
           <div className="of-marquee-track">
             {[0, 1].map((copy) => (
