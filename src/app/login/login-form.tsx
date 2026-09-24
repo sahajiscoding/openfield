@@ -14,6 +14,17 @@ function safeNext(raw: string | null): string {
   return raw;
 }
 
+/**
+ * OAuth/magic-link return origin. Pinned to the canonical site URL when it
+ * is configured, so signing in from a Vercel preview URL still returns to
+ * production instead of stranding the session on the preview host.
+ */
+function siteOrigin(): string {
+  const canonical = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+  if (canonical) return canonical;
+  return window.location.origin;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -86,7 +97,7 @@ export function LoginForm() {
                 const supabase = createClient();
                 const { error } = await supabase.auth.signInWithOtp({
                   email: email.trim(),
-                  options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+                  options: { emailRedirectTo: `${siteOrigin()}/auth/callback?next=${encodeURIComponent(next)}` },
                 });
                 return { error, notice: error ? undefined : "Check your inbox — magic link is on its way." };
               })
@@ -136,7 +147,7 @@ export function LoginForm() {
               const supabase = createClient();
               const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
-                options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+                options: { redirectTo: `${siteOrigin()}/auth/callback?next=${encodeURIComponent(next)}` },
               });
               return { error };
             })

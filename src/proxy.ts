@@ -42,6 +42,27 @@ function isGated(path: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
+  // 0) Canonical host: a visitor on any preview/deployment URL (or an old
+  //    domain) is bounced to NEXT_PUBLIC_SITE_URL before anything else, so
+  //    OAuth return URLs built from the current origin always land on the
+  //    production host. Skipped when unconfigured and on loopback (dev).
+  const canonical = canonicalHost();
+  const reqHost = (request.headers.get("x-forwarded-host") ?? request.nextUrl.host)
+    .split(",")[0]!
+    .trim()
+    .toLowerCase();
+  if (canonical && reqHost !== canonical && !isLoopback(reqHost)) {
+    const target = request.nextUrl.clone();
+    try {
+      const base = new URL(process.env.NEXT_PUBLIC_SITE_URL!.trim());
+      target.protocol = base.protocol;
+      target.host = canonical;
+    } catch {
+      target.host = canonical;
+    }
+    return NextResponse.redirect(target, 308);
+  }
+
   let response = NextResponse.next({ request });
 
   // 1) Device id for blob pathnames (mint once, httpOnly).
@@ -106,6 +127,22 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
   return response;
+}
+
+/** Canonical host from NEXT_PUBLIC_SITE_URL, or null when unconfigured. */
+function canonicalHost(): string | null {
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function isLoopback(host: string): boolean {
+  const bare = host.split(":")[0]!;
+  return bare === "localhost" || bare === "127.0.0.1" || bare === "[::1]" || bare === "::1";
 }
 
 export const config = {
