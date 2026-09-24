@@ -649,6 +649,7 @@
 .ohf-main {
   position: relative;
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -663,9 +664,14 @@
      ground under it instead of cutting them against the chrome. */
   --ohf-fade: 62px;
   /* The topbar is 46px high; keep only a small intentional clearance rather
-     than pushing the first-use surface into a large empty band. */
-  padding: 56px 20px calc(var(--ohf-dock-h, 180px) + 8px);
-  scroll-padding-bottom: calc(var(--ohf-dock-h, 180px) + 8px);
+     than pushing the first-use surface into a large empty band.
+
+     The foot of the scroll needs no clearance for the composer any more: the
+     dock is the row below this one, not a layer over it, so nothing is ever
+     hidden behind it and the last row of cards keeps its full height. All this
+     reserves is breathing room between that row and the composer's own rail. */
+  padding: 56px 20px 24px;
+  scroll-padding-bottom: 24px;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
@@ -1201,9 +1207,9 @@
    is the tallest thing on the page, and centring the starter copy in it pushed
    the studio's own workspace ~190px down the screen on a 1366×768 laptop and
    left the middle of the page blank. Anchored here it begins immediately under
-   the scope bar, and the breathing room falls below the copy — behind the
-   floating composer, where empty ground belongs. The clamp keeps that first
-   gap from growing without bound on a tall display. */
+   the scope bar, and the breathing room falls below the copy — on empty ground
+   above the composer. The clamp keeps that first gap from growing without
+   bound on a tall display. */
 .ohf-empty {
   min-height: 100%;
   display: grid;
@@ -1518,20 +1524,20 @@
   transform: scale(0.96);
 }
 
-/* The dock floats over the runs the way the top bar does. In flow it reserved
-   a black strip that cut every bottom picture off; floating, the gallery is
-   the ground edge to edge and the composer sits on it. The gallery cannot read
-   the dock's height from layout any more, so Composer publishes it as
-   --ohf-dock-h. */
+/* The dock is the studio column's last row. It used to be a layer floating
+   over the runs, which meant the gallery could not know its height from layout
+   — the composer published it as --ohf-dock-h and the grid paid it back as
+   bottom padding, and a mis-measured dock buried the last row under an opaque
+   plate. In flow there is nothing to measure and nothing to bury: the gallery
+   ends where the dock begins, the dock stands on the bottom edge of the frame,
+   and a prompt that grows a line takes its height from the runs instead. */
 .ohf-dock {
-  position: absolute;
-  inset: auto 0 0;
+  flex: none;
+  position: relative;
   z-index: 30;
   padding: 10px 20px 22px;
-  pointer-events: none;
 }
 .ohf-composer-wrap {
-  pointer-events: auto;
   position: relative;
   max-width: 940px;
   margin: 0 auto;
@@ -1565,10 +1571,10 @@
 /* ---------- the dock's second instrument ---------- */
 
 /* One slot, two instruments, laid on the same grid cell and aligned to the
-   same bottom edge: the dock never changes height, the gallery never reflows
-   under it, and the toolbar rises exactly where the composer's rail stood.
-   The composer stays mounted through it — an attached input and a half-typed
-   prompt survive a trip through selection. */
+   same bottom edge: the dock never changes height when runs are picked, and
+   the toolbar rises exactly where the composer's rail stood. The composer
+   stays mounted through it — an attached input and a half-typed prompt survive
+   a trip through selection. */
 .ohf-swap {
   display: grid;
   /* The track is pinned to the column rather than sized to its widest item:
@@ -1585,15 +1591,6 @@
   translate: 0 10px;
   scale: 0.97;
   pointer-events: none;
-}
-/* The wrap spans the whole column, so while the toolbar holds a fraction of it
-   the rest of that column hands its clicks back to the gallery. The banner
-   strip keeps its own. */
-.ohf-dock[data-selecting="true"] .ohf-composer-wrap {
-  pointer-events: none;
-}
-.ohf-dock[data-selecting="true"] :is(.ohf-undo, .ohf-alert) {
-  pointer-events: auto;
 }
 
 /* The toolbar is a plate, not a panel: it floats over returned pictures the
@@ -3734,10 +3731,11 @@ a.ohf-btn-solid {
   }
   .ohf-gallery {
     --ohf-fade: 56px;
-    /* The phone composer wraps into a tall stack (~320px): keep the live
-       dock clearance here too — a fixed 8px buried the last cards under it. */
-    padding: 64px 14px calc(var(--ohf-dock-h, 320px) + 12px);
-    scroll-padding-bottom: calc(var(--ohf-dock-h, 320px) + 12px);
+    /* The phone composer wraps into a tall stack; it is the dock's own row,
+       so the scroll only needs the same small breathing room the wide column
+       keeps — the cards are never laid under it. */
+    padding: 64px 14px 20px;
+    scroll-padding-bottom: 20px;
   }
   .ohf-dock {
     padding-left: 14px;
