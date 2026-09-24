@@ -3907,7 +3907,7 @@ a.ohf-btn-solid {
 .ohf .ohf-shell--fotagen,
 .of-studio-frame .ohf-shell--fotagen {
   display: grid;
-  grid-template-columns: 322px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
   align-items: start;
   height: 100%;
@@ -3922,12 +3922,35 @@ a.ohf-btn-solid {
   display: contents;
 }
 
-/* ---------- control sidebar ---------- */
-
-.ohf .ohf-side {
+/* Sidebar wrapper: the grid item whose width animates. The panel inside
+   keeps a fixed width so the collapse reads as a slide, not a squash. */
+.ohf-sidewrap {
+  width: 322px;
   position: sticky;
   top: 0;
   max-height: calc(100dvh - 120px);
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    width 0.32s var(--ease-slide),
+    opacity 0.25s ease,
+    margin 0.32s var(--ease-slide);
+}
+
+.ohf-shell--fotagen[data-side="closed"] .ohf-sidewrap {
+  width: 0;
+  margin-right: -14px;
+  opacity: 0;
+}
+
+/* ---------- control sidebar ---------- */
+
+.ohf .ohf-side {
+  width: 322px;
+  height: 100%;
+  max-height: inherit;
+  position: relative;
+  top: auto;
   display: flex;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -3935,6 +3958,18 @@ a.ohf-btn-solid {
   box-shadow: var(--shadow-2), var(--glint);
   overflow: hidden;
   min-width: 0;
+}
+
+.ohf-side-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ohf-side-collapse,
+.ohf-hist-side-toggle {
+  flex: none;
 }
 
 .ohf-side-scroll {
@@ -4529,8 +4564,17 @@ label.ohf-side-section-title {
     grid-template-columns: minmax(0, 1fr);
     overflow-y: auto;
   }
-  .ohf .ohf-side {
+  .ohf-sidewrap {
+    width: auto;
     position: static;
+    max-height: none;
+  }
+  .ohf-shell--fotagen[data-side="closed"] .ohf-sidewrap {
+    display: none;
+  }
+  .ohf .ohf-side {
+    width: auto;
+    height: auto;
     max-height: none;
   }
   .ohf-side-scroll {

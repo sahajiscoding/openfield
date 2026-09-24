@@ -8,7 +8,7 @@ import { Gallery } from "./gallery";
 import type { ActiveRun } from "./openhiggsfield-app";
 import type { GalleryView } from "./data";
 import type { RunRecord } from "./history";
-import { CloseIcon, SlidersIcon } from "./icons";
+import { CloseIcon, PanelLeftIcon, SlidersIcon } from "./icons";
 
 export type HistoryLayout = "grid" | "list";
 
@@ -32,6 +32,8 @@ export function HistoryPanel({
   freshIds,
   picked,
   galleryRef,
+  sideOpen,
+  onToggleSide,
   onOpen,
   onPick,
   onReuse,
@@ -48,6 +50,10 @@ export function HistoryPanel({
   freshIds: string[];
   picked: ReadonlySet<string>;
   galleryRef: RefObject<HTMLDivElement | null>;
+  /* Sidebar visibility: the toggle lives here so the controls can be
+     brought back after being hidden. */
+  sideOpen: boolean;
+  onToggleSide: () => void;
   onOpen: (id: string) => void;
   onPick: (id: string, index: number, range: boolean) => void;
   onReuse: (item: RunRecord) => void;
@@ -97,6 +103,16 @@ export function HistoryPanel({
   return (
     <section className="ohf-hist" aria-label="History">
       <div className="ohf-hist-head">
+        <button
+          type="button"
+          className="ohf-icon-btn ohf-hist-side-toggle"
+          aria-label={sideOpen ? "Hide controls sidebar" : "Show controls sidebar"}
+          title={sideOpen ? "Hide controls — the grid gets the room" : "Show controls"}
+          aria-pressed={sideOpen}
+          onClick={onToggleSide}
+        >
+          <PanelLeftIcon size={14} />
+        </button>
         <div className="ohf-hist-tabs" role="tablist" aria-label="History panel">
           <button
             type="button"

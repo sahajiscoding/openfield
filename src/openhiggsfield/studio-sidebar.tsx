@@ -20,6 +20,7 @@ import {
   CaretDownIcon,
   CloseIcon,
   MinusIcon,
+  PanelLeftIcon,
   PlusIcon,
   WarningIcon,
 } from "./icons";
@@ -109,6 +110,7 @@ export function StudioSidebar({
   balance,
   onError,
   onGenerate,
+  onCollapse,
 }: {
   surface: Surface;
   model: ModelEntry;
@@ -125,6 +127,8 @@ export function StudioSidebar({
   balance?: number | null;
   onError: (message: string | null) => void;
   onGenerate: () => void;
+  /* Collapse control: hides the whole sidebar to give the grid room. */
+  onCollapse: () => void;
 }) {
   const setModel = useActive((state) => state.setModel);
   const batch = useActive((state) => state.batch);
@@ -290,9 +294,20 @@ export function StudioSidebar({
         )}
 
         <div className="ohf-side-head">
-          <h2 className="ohf-side-title">
-            {surface === "image" ? "Image studio" : "Video studio"}
-          </h2>
+          <div className="ohf-side-title-row">
+            <h2 className="ohf-side-title">
+              {surface === "image" ? "Image studio" : "Video studio"}
+            </h2>
+            <button
+              type="button"
+              className="ohf-icon-btn ohf-side-collapse"
+              aria-label="Hide controls sidebar"
+              title="Hide controls — the grid gets the room"
+              onClick={onCollapse}
+            >
+              <PanelLeftIcon size={14} />
+            </button>
+          </div>
           <div className="ohf-side-tabs" role="tablist" aria-label="Model mode">
             {(["create", "edit"] as const).map((id) => (
               <button

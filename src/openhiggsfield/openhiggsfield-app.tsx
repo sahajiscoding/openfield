@@ -34,6 +34,17 @@ import { Viewer } from "./viewer";
 /* Long enough to read the bar and reach it; the drain line states the window. */
 const UNDO_MS = 6000;
 
+/* Sidebar visibility persists per browser: a crowded studio stays roomy. */
+const SIDE_OPEN_KEY = "openfield.side-open.v1";
+
+function initialSideOpen(): boolean {
+  try {
+    return window.localStorage.getItem(SIDE_OPEN_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
 export interface ActiveRun {
   /** Identifies the skeleton this run occupies, so a batch clears one tile at
       a time as its own request settles. */
@@ -205,6 +216,7 @@ export function OpenHiggsfieldApp({
      recent sheets on top, and a range extends from the last one touched. */
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState<SaveProgress | null>(null);
+  const [sideOpen, setSideOpen] = useState<boolean>(initialSideOpen);
   /* Live token balance. Starts from the server read, then revalidates on
      mount and settles to zero the moment the server refuses for funds — so
      the Generate press locks even when the first paint carried stale credit. */
@@ -666,6 +678,16 @@ export function OpenHiggsfieldApp({
 
   const openViewer = useCallback((id: string) => setViewerId(id), []);
   const runGenerate = useCallback(() => void generate(), [generate]);
+  const toggleSide = useCallback(() => {
+    setSideOpen((open) => {
+      try {
+        window.localStorage.setItem(SIDE_OPEN_KEY, open ? "0" : "1");
+      } catch {
+        /* Private mode — the session default stands. */
+      }
+      return !open;
+    });
+  }, []);
   const downloadSelection = useCallback(() => void downloadPicked(), [downloadPicked]);
   const dismissDeleted = useCallback(() => setDeleted(null), []);
   const viewerItem = viewerId
@@ -690,18 +712,19 @@ export function OpenHiggsfieldApp({
 
   return (
     <div className={`ohf ${fontClassName}`} style={{ "--ohf-grain": GRAIN_URI } as React.CSSProperties}>
-      <div className="ohf-shell ohf-shell--fotagen">
+      <div className="ohf-shell ohf-shell--fotagen" data-side={sideOpen ? "open" : "closed"}>
         <main className="ohf-main">
-          <StudioSidebar
-            surface={surface}
-            model={model}
-            generating={busy}
-            error={error}
-            focusNonce={focusNonce}
-            history={history}
-            selecting={selected.length > 0}
-            outOfTokens={outOfTokens}
-            balance={balance}
+          <div className="ohf-sidewrap" inert={!sideOpen}>
+            <StudioSidebar
+              surface={surface}
+              model={model}
+              generating={busy}
+              error={error}
+              focusNonce={focusNonce}
+              history={history}
+              selecting={selected.length > 0}
+              outOfTokens={outOfTokens}
+              balance={balance}
             selection={
               <SelectionBar
                 records={pickedRecords}
@@ -714,6 +737,7 @@ export function OpenHiggsfieldApp({
             }
             onError={setError}
             onGenerate={runGenerate}
+            onCollapse={toggleSide}
             notice={
               deleted && (
                 <UndoBar
@@ -724,6 +748,7 @@ export function OpenHiggsfieldApp({
               )
             }
           />
+          </div>
 
           <HistoryPanel
             view={view}
@@ -734,6 +759,8 @@ export function OpenHiggsfieldApp({
             freshIds={freshIds}
             picked={pickedSet}
             galleryRef={galleryRef}
+            sideOpen={sideOpen}
+            onToggleSide={toggleSide}
             onOpen={openViewer}
             onPick={togglePick}
             onReuse={retry}
