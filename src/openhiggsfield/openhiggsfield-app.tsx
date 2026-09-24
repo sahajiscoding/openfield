@@ -142,15 +142,25 @@ function failedRows(requestId: string, count: number, draft: RunDraft, error: st
   }));
 }
 
+/* React's production transport can surface its own crash ("Minified React
+   error #441 …") as the failure text. That link must never reach the studio
+   — map any such framework leakage to plain words. */
+function humanFailureText(message: string): string {
+  if (/minified react error|react\.dev\/errors|server components render/i.test(message)) {
+    return "the server hiccuped mid-render";
+  }
+  return message;
+}
+
 function failureText(status: GenerationStatus): string {
   if (status.status === "nsfw") return "the platform flagged the result as NSFW";
   if (status.status === "canceled") return "the run was canceled";
-  if (typeof status.error === "string" && status.error) return status.error;
+  if (typeof status.error === "string" && status.error) return humanFailureText(status.error);
   return "the platform reported a failure";
 }
 
 function describeError(caught: unknown): string {
-  const message = caught instanceof Error ? caught.message : String(caught);
+  const message = humanFailureText(caught instanceof Error ? caught.message : String(caught));
   // Auth, billing, and throttle states are user-actionable and safe to show;
   // provider detail stays in server logs so errors can't oracle anything.
   if (

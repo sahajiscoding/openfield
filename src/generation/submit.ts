@@ -73,7 +73,13 @@ export async function submitGenerationForUser(
       model: model.id,
       detail: caught instanceof Error ? caught.message : caught,
     });
-    if (personalKey) throw caught instanceof Error ? caught : new Error(String(caught));
+    if (personalKey) {
+      /* Rebuild as a plain Error: the raw provider error is a custom subclass
+         carrying the response body, and only plain serializable Errors may
+         cross the Server Action boundary (anything else surfaces to the
+         studio as a minified React error link). The message is unchanged. */
+      throw new Error(caught instanceof Error ? caught.message : String(caught));
+    }
     throw new Error("Generation failed — your tokens were refunded. Try again in a moment.");
   }
 }
