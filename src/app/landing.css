@@ -524,6 +524,18 @@
 .of-fx--7::before { background: radial-gradient(110% 80% at 70% 80%, #40301a 0%, #191207 55%, #08090a 100%); }
 .of-fx--8::before { background: linear-gradient(200deg, #2b2136 0%, #141020 50%, #08090a 100%); }
 
+.of-fx-art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.of-fx-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .of-fx .grain {
   position: absolute;
   inset: 0;
