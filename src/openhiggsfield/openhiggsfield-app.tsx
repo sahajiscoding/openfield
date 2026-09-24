@@ -373,7 +373,10 @@ export function OpenHiggsfieldApp({
      balance never opens skeletons: the press is refused up front, matching
      the disabled Generate button. */
   const generate = useCallback(async () => {
-    if (balanceRef.current !== null && balanceRef.current <= 0) {
+    /* A personal key bypasses token billing (the provider charges the key
+       owner), so a zero balance must not refuse the press while one is set —
+       matching the outOfTokens flag that keeps the Generate button enabled. */
+    if (balanceRef.current !== null && balanceRef.current <= 0 && !personalKey()) {
       setError("Out of tokens — top up to keep generating.");
       return;
     }
