@@ -70,6 +70,17 @@ export async function proxy(request: NextRequest) {
   if (minted) response.cookies.set(DEVICE_COOKIE, deviceId, DEVICE_COOKIE_OPTIONS);
 
   const path = request.nextUrl.pathname;
+
+  // 0b) Stray OAuth code: if Supabase (or a stale bookmark) drops ?code= on
+  //     any page except the callback itself, forward it there — the callback
+  //     exchanges it for a session and honors ?next=. Without this the code
+  //     sits unexchanged in the address bar and the visitor stays signed out.
+  if (path !== "/auth/callback" && request.nextUrl.searchParams.get("code")) {
+    const target = request.nextUrl.clone();
+    target.pathname = "/auth/callback";
+    return NextResponse.redirect(target, 308);
+  }
+
   const needsAuth = isGated(path) || path === "/login";
 
   // 2) Public render: hand the request straight through, auth untouched.
