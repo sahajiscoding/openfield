@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { parseSettings } from "@/generation/catalog";
-import type { ModelEntry, Surface } from "@/generation/catalog";
+import type { MediaRole, ModelEntry, Surface } from "@/generation/catalog";
 import { assemblePlane } from "@/generation/plane";
 import { MAX_BATCH, useActive } from "@/generation/stores/active";
 import { useImagePrompt, useVideoPrompt } from "@/generation/stores/prompt";
@@ -44,6 +44,16 @@ export type StudioMode = "create" | "edit";
 function hasMediaRoles(model: ModelEntry): boolean {
   return Object.keys(model.roles).length > 0;
 }
+
+/* Slot chips are narrow — full labels ("Start frame") truncate, so slots
+   carry one word while tooltips and aria keep the full role name. */
+const ROLE_SHORT: Record<MediaRole, string> = {
+  start: "Start",
+  end: "End",
+  reference: "Refs",
+  video: "Video",
+  audio: "Audio",
+};
 
 /* Royalty-free Pexels backdrops, one per model. Same pool as the landing
    featured rail (images.pexels.com pattern) — never fotachustudios /
@@ -406,7 +416,7 @@ export function StudioSidebar({
                     onClick={(event) => toggle(ASSETS, event.currentTarget)}
                   >
                     <PlusIcon size={14} />
-                    <span className="ohf-side-slot-name">{ROLE_LABELS[role]}</span>
+                    <span className="ohf-side-slot-name">{ROLE_SHORT[role]}</span>
                     <span className="ohf-side-slot-count">
                       {used}/{max}
                     </span>

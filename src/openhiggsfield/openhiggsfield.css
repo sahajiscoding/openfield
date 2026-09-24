@@ -3925,7 +3925,7 @@ a.ohf-btn-solid {
 /* Sidebar wrapper: the grid item whose width animates. The panel inside
    keeps a fixed width so the collapse reads as a slide, not a squash. */
 .ohf-sidewrap {
-  width: 322px;
+  width: 300px;
   position: sticky;
   top: 0;
   max-height: calc(100dvh - 120px);
@@ -3946,7 +3946,7 @@ a.ohf-btn-solid {
 /* ---------- control sidebar ---------- */
 
 .ohf .ohf-side {
-  width: 322px;
+  width: 300px;
   height: 100%;
   max-height: inherit;
   position: relative;
@@ -3996,8 +3996,8 @@ a.ohf-btn-solid {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 16px 14px;
+  gap: 12px;
+  padding: 14px 12px;
 }
 
 .ohf-side-head {
@@ -4049,7 +4049,7 @@ a.ohf-btn-solid {
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--line-2);
-  min-height: 150px;
+  min-height: 118px;
   display: flex;
   background: var(--s2);
 }
@@ -4071,10 +4071,10 @@ a.ohf-btn-solid {
 .ohf-side-hero-body {
   position: relative;
   margin-top: auto;
-  padding: 12px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -4098,32 +4098,39 @@ a.ohf-btn-solid {
 
 .ohf-side-hero-desc {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 11.5px;
+  line-height: 1.4;
   color: rgba(246, 250, 248, 0.82);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .ohf-side-hero-cost {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: 11.5px;
   color: rgba(246, 250, 248, 0.9);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ohf-side-hero-change {
   align-self: flex-start;
-  margin-top: 8px;
+  margin-top: 6px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 5px 11px;
   border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(6, 9, 8, 0.55);
   backdrop-filter: blur(6px);
   color: #fff;
   font: inherit;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -4137,11 +4144,11 @@ a.ohf-btn-solid {
 .ohf-side-refs {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--s2);
-  padding: 12px;
+  padding: 10px;
 }
 
 .ohf-side-section-head {
@@ -4174,18 +4181,18 @@ label.ohf-side-section-title {
 .ohf-side-slots {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .ohf-side-slot {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   border-radius: 10px;
   border: 1px dashed var(--line-2);
   background: transparent;
   color: var(--tx);
-  padding: 8px 10px;
+  padding: 7px 9px;
   font: inherit;
   font-size: 12px;
   cursor: pointer;
@@ -4216,7 +4223,7 @@ label.ohf-side-section-title {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--s2);
-  padding: 12px;
+  padding: 10px;
 }
 
 .ohf-side-prompt .ohf-prompt {

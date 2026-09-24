@@ -8,6 +8,7 @@ import { MODELS, getModel } from "@/generation/catalog";
 import { useActive } from "@/generation/stores/active";
 import { useImagePrompt, useVideoPrompt } from "@/generation/stores/prompt";
 import { OpenHiggsfieldApp } from "@/openhiggsfield/openhiggsfield-app";
+import { PanelLeftIcon } from "@/openhiggsfield/icons";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
@@ -24,6 +25,26 @@ export function StudioShell({ email, balance }: { email: string | undefined; bal
   const pathname = usePathname();
   const queryApplied = useRef(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  /* App nav defaults to a slim icon rail (FotaGen-style) — the studio is
+     crowded enough with the control sidebar open. Persists per browser. */
+  const [navCollapsed, setNavCollapsed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem("openfield.studio-nav.v1") !== "1";
+    } catch {
+      return true;
+    }
+  });
+
+  function toggleNav() {
+    setNavCollapsed((collapsed) => {
+      try {
+        window.localStorage.setItem("openfield.studio-nav.v1", collapsed ? "1" : "0");
+      } catch {
+        /* Private mode — the session default stands. */
+      }
+      return !collapsed;
+    });
+  }
 
   /* Deep-link prefill from the landing composer (?model=&prompt=).
      Runs once on mount: validates the model against the catalog, loads the
@@ -68,13 +89,23 @@ export function StudioShell({ email, balance }: { email: string | undefined; bal
   }
 
   return (
-    <div className={`of-studio-frame${sidebarOpen ? " of-studio-frame--nav-open" : ""}`}>
+    <div className={`of-studio-frame${sidebarOpen ? " of-studio-frame--nav-open" : ""}${navCollapsed ? " of-studio-frame--nav-collapsed" : ""}`}>
       <aside className="of-studio-sidebar" aria-label="Studio navigation">
         <div className="of-studio-sidebar-head">
           <Link href="/" className="of-studio-side-brand" aria-label="Back to Openfield home">
             <span className="of-studio-side-mark" aria-hidden>○</span>
             <span>Openfield</span>
           </Link>
+          <button
+            type="button"
+            className="of-studio-nav-collapse"
+            aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-pressed={navCollapsed}
+            title={navCollapsed ? "Expand navigation" : "Collapse to icons"}
+            onClick={toggleNav}
+          >
+            <PanelLeftIcon size={14} />
+          </button>
           <button
             type="button"
             className="of-studio-sidebar-close"
@@ -98,6 +129,7 @@ export function StudioShell({ email, balance }: { email: string | undefined; bal
                 href={item.href}
                 className={`of-studio-nav-link${active ? " is-active" : ""}`}
                 aria-current={active ? "page" : undefined}
+                title={item.label}
                 onClick={closeSidebar}
               >
                 <span className="of-studio-nav-icon" aria-hidden>{item.icon}</span>
