@@ -8,7 +8,7 @@ import { FEATURED, type FeaturedItem } from "./featured-media";
    marquee above it (which scrolls left). */
 const DRIFT_PX_PER_SEC = 45;
 const RESUME_AFTER_MANUAL_MS = 3000;
-const RESUME_AFTER_HOVER_MS = 1500;
+const RESUME_AFTER_HOVER_MS = 800;
 
 function FeaturedVideo({
   poster,
@@ -173,18 +173,7 @@ export function FeaturedRail() {
   };
 
   return (
-    <section
-      className="of-feat"
-      aria-labelledby="of-feat-h"
-      onMouseEnter={() => {
-        hoveringRef.current = true;
-      }}
-      onMouseLeave={unhover}
-      onFocusCapture={() => {
-        hoveringRef.current = true;
-      }}
-      onBlurCapture={unhover}
-    >
+    <section className="of-feat" aria-labelledby="of-feat-h">
       <div className="of-wrap of-feat-head">
         <p className="of-kicker of-feat-kicker">Featured</p>
         <h2 id="of-feat-h" className="of-feat-title-h">
@@ -218,7 +207,21 @@ export function FeaturedRail() {
           </button>
         </div>
       </div>
-      <div ref={railRef} className="of-feat-rail" role="region" aria-label="Featured models carousel" tabIndex={0}>
+      <div
+        ref={railRef}
+        className="of-feat-rail"
+        role="region"
+        aria-label="Featured models carousel"
+        tabIndex={0}
+        onPointerEnter={() => {
+          hoveringRef.current = true;
+        }}
+        onPointerLeave={unhover}
+        onFocus={() => {
+          hoveringRef.current = true;
+        }}
+        onBlur={unhover}
+      >
         <div className="of-feat-track">
           <div className="of-feat-copy">
             {items.map((item) => (
