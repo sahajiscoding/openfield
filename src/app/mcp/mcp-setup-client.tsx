@@ -243,7 +243,7 @@ function getConfigs(_endpoint: string): ToolConfig[] {
             mcpServers: {
               openfield: {
                 url: ep,
-                description: "Openfield — 38 models + pricing (OAuth)",
+                description: "Openfield — 44 models + pricing (OAuth)",
               },
             },
           },
@@ -457,7 +457,7 @@ export function McpSetupClient({ endpoint }: { endpoint: string }) {
 
           <div className="of-mcp-v2-tool-doc">
             <code>openfield_models</code>
-            <p>List 38 Higgsfield models — id, label, surface. Perfect for “which model for 9:16?”.</p>
+            <p>List 44 Higgsfield models — id, label, surface. Perfect for “which model for 9:16?”.</p>
             <pre>{`{
   "jsonrpc": "2.0",
   "id": 1,

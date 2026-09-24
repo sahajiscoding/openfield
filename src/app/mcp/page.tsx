@@ -36,7 +36,7 @@ export default function McpPublicPage() {
               One endpoint. OAuth 2.1 with PKCE — no Supabase token copying. 3 tools — two read-only tools plus a token-gated generation tool —{" "}
               <code style={{ background: "#101214", border: "1px solid var(--of-line)", padding: "2px 6px", borderRadius: 6 }}>openfield_models</code> and{" "}
               <code style={{ background: "#101214", border: "1px solid var(--of-line)", padding: "2px 6px", borderRadius: 6 }}>openfield_pricing</code> — so
-              Claude, Cursor, and friends can list 38 Higgsfield models, inspect token rates, and generate through Openfield without ever seeing your
+              Claude, Cursor, and friends can list 44 Higgsfield models, inspect token rates, and generate through Openfield without ever seeing your
               payment keys. Generation checks the wallet first, atomically deducts the quoted cost, then starts the provider request; failed submits are refunded.
             </p>
           </Reveal>

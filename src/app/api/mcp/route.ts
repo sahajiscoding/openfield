@@ -146,7 +146,7 @@ export async function POST(request: Request) {
         tools: [
           {
             name: "openfield_models",
-            description: "List Openfield image and video models (38 Higgsfield models).",
+            description: "List Openfield image and video models (44 Higgsfield models).",
             inputSchema: { type: "object", properties: {} },
           },
           {

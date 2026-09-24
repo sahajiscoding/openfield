@@ -22,7 +22,7 @@ const FAQS: Array<[string, string]> = [
   ],
   [
     "What does 720p · 16:9 · 30 seconds cost?",
-    "Seedance 2.5: 260 tokens (~$2.60). Kling 3.0: 126 tokens (~$1.26). Wan 3.0 Prime: 143 tokens (~$1.43). MiniMax H3: 215 tokens (~$2.15). Soul 2 images are 1 token each. The full table below quotes every model the same way.",
+    "Seedance 2.5: 260 tokens (~$2.60). Kling 3.0: 126 tokens (~$1.26). Wan 3.0 Prime: 143 tokens (~$1.43). MiniMax H3: 215 tokens (~$2.15). Genjutsu Motion Transfer: 1022 tokens per 30s of input video (~$10.22, billed on your clip length). Cinema Studio 4.0: 618 tokens (~$6.17). Soul 2 images are 1 token each, Soul Standard 10 tokens, Marketing Studio images 2 tokens. The full table below quotes every model the same way.",
   ],
   [
     "Do tokens expire?",

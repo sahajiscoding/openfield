@@ -20,7 +20,7 @@ export const SITE_DESCRIPTOR = "Open-source AI video studio";
 export const SITE_TITLE = `${SITE_NAME} — ${SITE_DESCRIPTOR}`;
 
 export const SITE_DESCRIPTION =
-  "Openfield is the open Higgsfield studio — one prompt bar for image and video across 38 Higgsfield models, Supabase sign-in, token billing via UroPay, and every finished run in one gallery.";
+  "Openfield is the open Higgsfield studio — one prompt bar for image and video across 44 Higgsfield models, Supabase sign-in, token billing via UroPay, and every finished run in one gallery.";
 
 export const STUDIO_BG = "#08090a";
 

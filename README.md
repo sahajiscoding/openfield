@@ -1,6 +1,6 @@
 # Openfield — the open Higgsfield studio
 
-> One prompt bar for cinematic AI image + video across 38 Higgsfield models. Supabase sign-in. Pay per generation in tokens via UroPay. MIT.
+> One prompt bar for cinematic AI image + video across 44 Higgsfield models. Supabase sign-in. Pay per generation in tokens via UroPay. MIT.
 
 Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfield studio ([wide-trace/open-higgsfield](https://github.com/wide-trace/open-higgsfield)) — 38-model catalog, one-composer studio, server-actions-only generation (`POST /{model}`, `GET /requests/{id}/status`), Zustand + IndexedDB, masonry gallery + viewer — extended with Supabase auth, token billing, and UroPay checkout. Generation runs **only** on the official Higgsfield API.
 
@@ -17,7 +17,7 @@ Built for the **$50K Higgsfield-competitor challenge**: the open-source Higgsfie
 - `/pricing` — token packs (UroPay checkout) + full per-model rate card, comparison, FAQ
 - `/login` — Supabase sign-in (magic link · password · Google) + reset flow
 - `/onboarding` — first-visit quiz (use case, referral, experience, optional DOB) before the studio
-- `/studio` — gated studio (38 Higgsfield models, live token balance in the top bar)
+- `/studio` — gated studio (44 Higgsfield models, live token balance in the top bar)
 - `/studio/billing` — balance, UroPay order history, per-order status
 - `/billing/payment/[tenantRef]` — server-authoritative payment status (waiting / submitted / verifying / paid / failed / expired / cancelled / not found / unavailable), self-polling
 - `/studio/security` — opt-in TOTP second factor

@@ -5,7 +5,7 @@ type Mapped = { path: string; body: Record<string, unknown> };
 type Mapper = (plane: GenerationPlane) => Mapped;
 
 const MAP: Record<string, Mapper> = {
-  "soul-cinema": (plane) => mapSoul(plane, "higgsfield-ai/soul/cinema"),
+  "soul-standard": (plane) => mapSoul(plane, "higgsfield-ai/soul/standard"),
   "soul-2": (plane) => mapSoul(plane, "higgsfield-ai/soul/v2/standard"),
   "kling-3-turbo": mapKlingTurbo,
   "kling-3-std": (plane) => mapKling3(plane, "kling-video/v3.0/std"),
@@ -19,6 +19,12 @@ const MAP: Record<string, Mapper> = {
   "seedance-2.5": (plane) => mapSeedance(plane, "bytedance/seedance-2.5"),
   "seedance-2.5-edit": (plane) => mapSeedanceSource(plane, "bytedance/seedance-2.5/video-edit", false),
   "seedance-2.5-extend": (plane) => mapSeedanceSource(plane, "bytedance/seedance-2.5/video-extend", true),
+  "genjutsu-motion": (plane) => mapGenjutsu(plane, "higgsfiled/genjutsu/motion-transfer/v1.0"),
+  "genjutsu-swap": (plane) => mapGenjutsu(plane, "higgsfiled/genjutsu/object-swap/v1.0"),
+  "cinema-studio-4": mapCinema,
+  "marketing-studio": (plane) => mapMarketing(plane, "marketing-studio/image"),
+  "marketing-flare": (plane) => mapMarketing(plane, "marketing-studio/image/flare"),
+  "marketing-sunburst": (plane) => mapMarketing(plane, "marketing-studio/image/sunburst"),
 };
 
 export function toPlatform(plane: GenerationPlane): Mapped {
@@ -196,6 +202,58 @@ function mapSeedanceSource(plane: GenerationPlane, path: string, withDuration: b
       ...(refs.length ? { image_urls: refs } : {}),
       ...(extraVideos.length ? { video_urls: extraVideos } : {}),
       ...(audios.length ? { audio_urls: audios } : {}),
+    },
+  };
+}
+
+/** Genjutsu motion-transfer / object-swap: video-in → video-out. */
+function mapGenjutsu(plane: GenerationPlane, path: string): Mapped {
+  const [video] = urls(plane, "video");
+  if (!video) throw new Error("Genjutsu needs a reference video — attach one and try again.");
+  const refs = urls(plane, "reference");
+  return {
+    path,
+    body: {
+      prompt: plane.prompt.text,
+      video_url: video,
+      ...(refs.length ? { image_urls: refs } : {}),
+      resolution: plane.settings.resolution,
+    },
+  };
+}
+
+/** Cinema Studio 4.0: text-to-video with optional visual references. */
+function mapCinema(plane: GenerationPlane): Mapped {
+  const start = urls(plane, "start")[0];
+  const refs = urls(plane, "reference");
+  const [video] = urls(plane, "video");
+  return {
+    path: "higgsfield/cinema-studio/4.0",
+    body: {
+      prompt: plane.prompt.text,
+      duration: plane.settings.duration,
+      resolution: plane.settings.resolution,
+      aspect_ratio: plane.settings.aspectRatio,
+      generate_audio: plane.settings.generateAudio,
+      ...(start ? { image_url: start } : {}),
+      ...(refs.length ? { image_urls: refs } : {}),
+      ...(video ? { video_url: video } : {}),
+    },
+  };
+}
+
+/** Marketing Studio image direct mode (generate or edit, no preset). */
+function mapMarketing(plane: GenerationPlane, path: string): Mapped {
+  const refs = urls(plane, "reference");
+  return {
+    path,
+    body: {
+      prompt: plane.prompt.text,
+      resolution: plane.settings.resolution,
+      aspect_ratio: plane.settings.aspectRatio,
+      ...(typeof plane.settings.quality === "string" ? { quality: plane.settings.quality } : {}),
+      enhance_prompt: false,
+      ...(refs.length ? { image_urls: refs } : {}),
     },
   };
 }

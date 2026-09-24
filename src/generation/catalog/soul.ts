@@ -8,10 +8,10 @@ const soulSettings = {
   enhancePrompt: { type: "boolean", default: false },
 } as const satisfies ModelEntry["settings"];
 
-export const soulCinema: ModelEntry = {
-  id: "soul-cinema",
+export const soulStandard: ModelEntry = {
+  id: "soul-standard",
   surface: "image",
-  label: "Soul Cinema",
+  label: "Soul Standard",
   roles: {},
   settings: soulSettings,
 };

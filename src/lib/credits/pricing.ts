@@ -45,20 +45,32 @@ const VIDEO_USD_PER_SEC: Record<string, number> = {
   "wan-3-prime": 0.0476,
   "happy-horse-1": 0.077,
   "happy-horse-1.1": 0.077,
+  // Genjutsu bills per INPUT-video second at the 720p sale rate (conservative:
+  // the quote uses the duration setting as the expected clip length).
+  "genjutsu-motion": 0.3405,
+  "genjutsu-swap": 0.3405,
+  // Cinema Studio 4.0 is token-metered; the explore floor rate is the quote.
+  "cinema-studio-4": 0.2057,
   // Unlisted on the public rate card — conservative defaults, adjust on invoice.
   "flux-3": 0.05,
-  "soul-cinema": 0.05,
   dop: 0.05,
 };
 
 /** $/image for image models, keyed by catalog id. */
 const IMAGE_USD_PER_IMAGE: Record<string, number> = {
   "soul-2": 0.0032,
+  "soul-standard": 0.0938,
   "grok-imagine-2": 0.04,
   "ideogram-4": 0.03,
   "recraft-4.1": 0.035,
   "qwen-image-3": 0.04,
   "z-image-turbo": 0.015,
+  // Marketing Studio 2.0 at the 2k sale rate (covers 1k too: both quote 2
+  // tokens; 4k-high is not offered — see marketing-studio.ts).
+  "marketing-studio": 0.0167,
+  // Flare/Sunburst are token-metered estimates — from-price floor.
+  "marketing-flare": 0.02,
+  "marketing-sunburst": 0.02,
   // Unlisted on the public rate card — conservative default.
   "flux-2": 0.02,
 };
