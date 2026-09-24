@@ -335,7 +335,6 @@ export const Gallery = memo(function Gallery({
   runs,
   freshIds,
   picked,
-  layout = "grid",
   onOpen,
   onPick,
   onReuse,
@@ -351,7 +350,6 @@ export const Gallery = memo(function Gallery({
   runs: ActiveRun[];
   freshIds: string[];
   picked: ReadonlySet<string>;
-  layout?: "grid" | "list";
   onOpen: (id: string) => void;
   onPick: (id: string, index: number, range: boolean) => void;
   onReuse: (item: RunRecord) => void;
@@ -365,8 +363,8 @@ export const Gallery = memo(function Gallery({
   const panel = {
     id: "ohf-panel",
     role: "tabpanel",
-    "aria-labelledby": "ohf-hist-tab-history",
-    className: `ohf-gallery ohf-scroll${layout === "list" ? " ohf-gallery--list" : ""}`,
+    "aria-labelledby": `ohf-tab-${view}`,
+    className: "ohf-gallery ohf-scroll",
   } as const;
 
   if (items.length === 0 && runs.length === 0) {
@@ -379,38 +377,21 @@ export const Gallery = memo(function Gallery({
 
   return (
     <div {...panel} ref={galleryRef}>
-      {layout === "list" ? (
-        <ListColumn
-          key={`${view}:list`}
-          selecting={selecting}
-          runs={runs}
-          items={items}
-          freshIds={freshIds}
-          picked={picked}
-          onOpen={onOpen}
-          onPick={onPick}
-          onReuse={onReuse}
-          onFavorite={onFavorite}
-          onDownload={onDownload}
-          onDelete={onDelete}
-        />
-      ) : (
-        <VirtualizedGrid
-          key={`${view}:grid`}
-          scrollRef={galleryRef}
-          selecting={selecting}
-          runs={runs}
-          items={items}
-          freshIds={freshIds}
-          picked={picked}
-          onOpen={onOpen}
-          onPick={onPick}
-          onReuse={onReuse}
-          onFavorite={onFavorite}
-          onDownload={onDownload}
-          onDelete={onDelete}
-        />
-      )}
+      <VirtualizedGrid
+        key={view}
+        scrollRef={galleryRef}
+        selecting={selecting}
+        runs={runs}
+        items={items}
+        freshIds={freshIds}
+        picked={picked}
+        onOpen={onOpen}
+        onPick={onPick}
+        onReuse={onReuse}
+        onFavorite={onFavorite}
+        onDownload={onDownload}
+        onDelete={onDelete}
+      />
     </div>
   );
 });
@@ -501,61 +482,6 @@ function VirtualizedGrid({
           </div>
         );
       })}
-    </div>
-  );
-}
-
-/* List mode: the same Tile cards in a single-column flow. Capped at the
-   history cap (60), so a long session cannot grow the DOM. Fresh, picked,
-   selection-mode and skeleton behavior match the grid path. */
-function ListColumn({
-  selecting,
-  runs,
-  items,
-  freshIds,
-  picked,
-  onOpen,
-  onPick,
-  onReuse,
-  onFavorite,
-  onDownload,
-  onDelete,
-}: {
-  selecting: boolean;
-  runs: ActiveRun[];
-  items: RunRecord[];
-  freshIds: string[];
-  picked: ReadonlySet<string>;
-  onOpen: (id: string) => void;
-  onPick: (id: string, index: number, range: boolean) => void;
-  onReuse: (item: RunRecord) => void;
-  onFavorite: (item: RunRecord) => void;
-  onDownload: (item: RunRecord) => Promise<void>;
-  onDelete: (item: RunRecord) => void;
-}) {
-  const slots = useMemo(() => slotsOf(runs, items).slice(0, 60), [runs, items]);
-  return (
-    <div className="ohf-grid ohf-grid--list" data-selecting={selecting}>
-      {slots.map((slot) =>
-        slot.kind === "run" ? (
-          <RunningTile key={slot.key} run={slot.run} />
-        ) : (
-          <Tile
-            key={slot.key}
-            item={slot.item}
-            index={slot.index}
-            fresh={freshIds.includes(slot.item.id)}
-            picked={picked.has(slot.item.id)}
-            selecting={selecting}
-            onOpen={onOpen}
-            onPick={onPick}
-            onReuse={onReuse}
-            onFavorite={onFavorite}
-            onDownload={onDownload}
-            onDelete={onDelete}
-          />
-        ),
-      )}
     </div>
   );
 }

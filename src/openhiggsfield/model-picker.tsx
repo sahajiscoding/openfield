@@ -11,21 +11,14 @@ import { SURFACE_LABELS, describeModel } from "./data";
 import { CheckIcon, CloseIcon, SearchIcon } from "./icons";
 import { ModelIcon, modelIconSrc } from "./model-icon";
 
-/** Pure UI filter for the sidebar's Create/Edit tabs. Create = models that
-    start from a prompt alone (no media roles); Edit = models that take media
-    inputs. The catalog itself is untouched. */
-export type ModelModeFilter = "create" | "edit";
-
 export function ModelPicker({
   selectedId,
   surface,
-  modeFilter,
   onPick,
   onClose,
 }: {
   selectedId: string;
   surface: Surface;
-  modeFilter?: ModelModeFilter;
   onPick: (model: ModelEntry) => void;
   onClose: () => void;
 }) {
@@ -38,14 +31,7 @@ export function ModelPicker({
   }, []);
 
   const query = search.trim().toLowerCase();
-  const catalog = MODELS.filter(
-    (model) =>
-      model.surface === surface &&
-      (!modeFilter ||
-        (modeFilter === "create"
-          ? Object.keys(model.roles).length === 0
-          : Object.keys(model.roles).length > 0)),
-  );
+  const catalog = MODELS.filter((model) => model.surface === surface);
   /* The description is searchable too: "references", "4K" and "audio" are how
      a visitor asks for a model whose name they do not remember. */
   const models = catalog.filter(
@@ -96,8 +82,8 @@ export function ModelPicker({
             of merchandising the catalog can actually back up. */}
         <div className="ohf-pop-head ohf-picker-group">
           {query
-            ? `${models.length} of ${catalog.length} ${SURFACE_LABELS[surface].toLowerCase()} models${modeFilter ? ` · ${modeFilter}` : ""}`
-            : `${SURFACE_LABELS[surface]} models${modeFilter ? ` · ${modeFilter === "create" ? "Create" : "Edit"}` : ""}`}
+            ? `${models.length} of ${catalog.length} ${SURFACE_LABELS[surface].toLowerCase()} models`
+            : `${SURFACE_LABELS[surface]} models`}
         </div>
 
         {models.length === 0 && (

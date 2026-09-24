@@ -87,17 +87,6 @@ export function CloseIcon({ size = 14 }: IconProps) {
   );
 }
 
-/* Sidebar collapse toggle: a frame with its left pane filled, so the mark
-   reads as "the panel beside this one" at 13px. */
-export function PanelLeftIcon({ size = 14 }: IconProps) {
-  return (
-    <svg {...base(size)}>
-      <rect x="1.75" y="2.5" width="12.5" height="11" rx="2.5" />
-      <path d="M6.2 2.5v11" />
-    </svg>
-  );
-}
-
 export function CheckIcon({ size = 13 }: IconProps) {
   return (
     <svg {...base(size)} strokeWidth={1.8}>

@@ -329,76 +329,6 @@
   display: none;
 }
 
-/* Desktop collapse toggle for the app nav (the mobile drawer keeps its own
-   hamburger + close). Hidden on mobile where the drawer rules apply. */
-.of-studio-nav-collapse {
-  appearance: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border: 1px solid var(--of-line, #1d2124);
-  border-radius: 9px;
-  background: transparent;
-  color: var(--of-smoke, #9aa08c);
-  cursor: pointer;
-  transition: color .16s ease, border-color .16s ease, background .16s ease;
-}
-
-.of-studio-nav-collapse:hover {
-  color: var(--of-bone, #edeae0);
-  border-color: rgba(212, 249, 33, 0.45);
-  background: rgba(212, 249, 33, 0.06);
-}
-
-/* Collapsed icon rail (desktop only — the mobile drawer is untouched). */
-@media (min-width: 901px) {
-  .of-studio-frame--nav-collapsed {
-    grid-template-columns: 62px minmax(0, 1fr);
-  }
-
-  .of-studio-frame--nav-collapsed .of-studio-sidebar {
-    padding: 16px 8px;
-    align-items: center;
-  }
-
-  .of-studio-frame--nav-collapsed .of-studio-sidebar-head {
-    padding: 4px 0 18px;
-  }
-
-  .of-studio-frame--nav-collapsed .of-studio-side-brand > span:last-child {
-    display: none;
-  }
-
-  .of-studio-frame--nav-collapsed .of-studio-nav {
-    width: 100%;
-    justify-items: center;
-  }
-
-  .of-studio-frame--nav-collapsed .of-studio-nav-link {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    width: 44px;
-    min-height: 42px;
-    padding: 8px 0;
-  }
-
-  .of-studio-frame--nav-collapsed .of-studio-nav-link > span:last-child {
-    display: none;
-  }
-
-  .of-studio-frame--nav-collapsed .of-studio-sidebar-foot {
-    display: none;
-  }
-}
-
-@media (max-width: 900px) {
-  .of-studio-nav-collapse {
-    display: none;
-  }
-}
-
 .of-studio-nav {
   display: grid;
   gap: 4px;
@@ -597,15 +527,4 @@
   .of-studio-user button {
     padding: 8px 10px;
   }
-}
-
-/* FotaGen studio variant: the inner .ohf grid owns the layout, not the
-   legacy flex column above. Lives here (loaded after the studio system) so
-   it wins at equal specificity. */
-.of-studio-frame .ohf-shell--fotagen {
-  display: grid;
-}
-
-.of-studio-frame .ohf-shell--fotagen .ohf-main {
-  display: contents;
 }
