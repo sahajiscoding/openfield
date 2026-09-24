@@ -537,7 +537,8 @@
   --ohf-fade: 62px;
   /* The topbar is 46px high; keep only a small intentional clearance rather
      than pushing the first-use surface into a large empty band. */
-  padding: 56px 20px calc(var(--ohf-dock-h, 138px) + 8px);
+  padding: 56px 20px calc(var(--ohf-dock-h, 180px) + 8px);
+  scroll-padding-bottom: calc(var(--ohf-dock-h, 180px) + 8px);
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
@@ -3606,7 +3607,10 @@ a.ohf-btn-solid {
   }
   .ohf-gallery {
     --ohf-fade: 56px;
-    padding: 64px 14px 8px;
+    /* The phone composer wraps into a tall stack (~320px): keep the live
+       dock clearance here too — a fixed 8px buried the last cards under it. */
+    padding: 64px 14px calc(var(--ohf-dock-h, 320px) + 12px);
+    scroll-padding-bottom: calc(var(--ohf-dock-h, 320px) + 12px);
   }
   .ohf-dock {
     padding-left: 14px;
