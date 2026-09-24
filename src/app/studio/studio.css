@@ -528,3 +528,14 @@
     padding: 8px 10px;
   }
 }
+
+/* FotaGen studio variant: the inner .ohf grid owns the layout, not the
+   legacy flex column above. Lives here (loaded after the studio system) so
+   it wins at equal specificity. */
+.of-studio-frame .ohf-shell--fotagen {
+  display: grid;
+}
+
+.of-studio-frame .ohf-shell--fotagen .ohf-main {
+  display: contents;
+}

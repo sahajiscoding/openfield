@@ -15,7 +15,6 @@ import { useSettings } from "@/generation/stores/settings";
 import { getMyBalance } from "@/lib/billing/actions";
 
 import { GRAIN_URI, artFor } from "./artwork";
-import { Composer } from "./composer";
 import { fileNameFor, saveFile } from "./download";
 import {
   CROSS_VIEWS,
@@ -25,11 +24,11 @@ import {
   ratioToCss,
   type GalleryView,
 } from "./data";
-import { Gallery } from "./gallery";
+import { HistoryPanel } from "./history-panel";
 import { loadHistory, mergeHistory, replaceRequest, saveHistory, stepRun, type RunRecord } from "./history";
 import { CloseIcon, UndoIcon } from "./icons";
 import { SelectionBar, type SaveProgress } from "./selection-bar";
-import { Topbar } from "./topbar";
+import { StudioSidebar } from "./studio-sidebar";
 import { Viewer } from "./viewer";
 
 /* Long enough to read the bar and reach it; the drain line states the window. */
@@ -691,28 +690,9 @@ export function OpenHiggsfieldApp({
 
   return (
     <div className={`ohf ${fontClassName}`} style={{ "--ohf-grain": GRAIN_URI } as React.CSSProperties}>
-      <div className="ohf-shell">
+      <div className="ohf-shell ohf-shell--fotagen">
         <main className="ohf-main">
-          <Topbar view={view} onView={switchView} busy={busy} />
-
-          <Gallery
-            view={view}
-            surface={surface}
-            items={visible}
-            runs={runsHere}
-            freshIds={freshIds}
-            picked={pickedSet}
-            onOpen={openViewer}
-            onPick={togglePick}
-            onReuse={retry}
-            onFavorite={toggleFavorite}
-            onDownload={downloadRun}
-            onDelete={deleteRun}
-            onStarter={applyStarter}
-            galleryRef={galleryRef}
-          />
-
-          <Composer
+          <StudioSidebar
             surface={surface}
             model={model}
             generating={busy}
@@ -721,6 +701,7 @@ export function OpenHiggsfieldApp({
             history={history}
             selecting={selected.length > 0}
             outOfTokens={outOfTokens}
+            balance={balance}
             selection={
               <SelectionBar
                 records={pickedRecords}
@@ -742,6 +723,24 @@ export function OpenHiggsfieldApp({
                 />
               )
             }
+          />
+
+          <HistoryPanel
+            view={view}
+            onView={switchView}
+            surface={surface}
+            items={visible}
+            runs={runsHere}
+            freshIds={freshIds}
+            picked={pickedSet}
+            galleryRef={galleryRef}
+            onOpen={openViewer}
+            onPick={togglePick}
+            onReuse={retry}
+            onFavorite={toggleFavorite}
+            onDownload={downloadRun}
+            onDelete={deleteRun}
+            onStarter={applyStarter}
           />
         </main>
 
