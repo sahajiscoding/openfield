@@ -3972,6 +3972,23 @@ a.ohf-btn-solid {
   flex: none;
 }
 
+/* When the sidebar is hidden the toggle names itself, so the way back is
+   unmistakable. */
+.ohf-hist-side-toggle--show {
+  width: auto;
+  padding: 0 12px;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+  border-color: var(--accent-32);
+}
+
+.ohf-hist-side-toggle--show:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
 .ohf-side-scroll {
   position: relative;
   flex: 1;

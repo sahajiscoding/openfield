@@ -105,13 +105,14 @@ export function HistoryPanel({
       <div className="ohf-hist-head">
         <button
           type="button"
-          className="ohf-icon-btn ohf-hist-side-toggle"
+          className={`ohf-icon-btn ohf-hist-side-toggle${sideOpen ? "" : " ohf-hist-side-toggle--show"}`}
           aria-label={sideOpen ? "Hide controls sidebar" : "Show controls sidebar"}
           title={sideOpen ? "Hide controls — the grid gets the room" : "Show controls"}
           aria-pressed={sideOpen}
           onClick={onToggleSide}
         >
           <PanelLeftIcon size={14} />
+          {!sideOpen && <span aria-hidden>Controls</span>}
         </button>
         <div className="ohf-hist-tabs" role="tablist" aria-label="History panel">
           <button
