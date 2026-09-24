@@ -49,6 +49,7 @@ export const metadata: Metadata = {
   ],
   openGraph: openGraphFor({ path: "/" }),
   twitter: twitterFor(),
+  verification: { google: "AEIauCUUbD9tJhpCBg3LHSNrsR5iULOPg8cHy_OiNE0" },
   robots: {
     index: true,
     follow: true,
