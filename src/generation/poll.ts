@@ -1,5 +1,6 @@
 import { getGenerationStatuses } from "./actions";
 import type { GenerationStatus, StatusResult } from "./platform";
+import { personalKey } from "./stores/api-key";
 
 /** Statuses the platform never moves off again. */
 const TERMINAL = new Set(["completed", "failed", "nsfw", "canceled"]);
@@ -71,7 +72,13 @@ async function round(): Promise<void> {
   timer = null;
   polling = true;
   try {
-    const results = await getGenerationStatuses({ requestIds: [...waiting.keys()] });
+    // Status checks ride the same key the submits used (a personal key sees
+    // only its own requests) — read live so a key added mid-session applies
+    // to the next round without remounting the studio.
+    const results = await getGenerationStatuses({
+      requestIds: [...waiting.keys()],
+      apiKey: personalKey() ?? undefined,
+    });
     misses = 0;
     for (const result of results) deliver(result);
     sweep();

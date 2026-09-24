@@ -8,6 +8,7 @@ import type { Surface } from "@/generation/catalog";
 import { assemblePlane } from "@/generation/plane";
 import type { GenerationStatus } from "@/generation/platform";
 import { POLL_DEADLINE_MS, stopWatching, watchRequest } from "@/generation/poll";
+import { personalKey, useApiKey } from "@/generation/stores/api-key";
 import { useActive } from "@/generation/stores/active";
 import { useImagePrompt, useVideoPrompt } from "@/generation/stores/prompt";
 import { useSettings } from "@/generation/stores/settings";
@@ -199,7 +200,10 @@ export function OpenHiggsfieldApp({
      mount and settles to zero the moment the server refuses for funds — so
      the Generate press locks even when the first paint carried stale credit. */
   const [balance, setBalance] = useState<number | null>(initialBalance ?? null);
-  const outOfTokens = balance !== null && balance <= 0;
+  /* A personal Higgsfield key bypasses token billing: the provider charges
+     the key owner, so a zero balance must not lock Generate while one is set. */
+  const hasPersonalKey = useApiKey((state) => state.key.trim().length > 0);
+  const outOfTokens = balance !== null && balance <= 0 && !hasPersonalKey;
   const balanceRef = useRef(balance);
   balanceRef.current = balance;
 
@@ -423,7 +427,7 @@ export function OpenHiggsfieldApp({
 
     const runOne = async (slot: { skeletons: string[] }) => {
       try {
-        const queued = await submitGeneration(plane);
+        const queued = await submitGeneration(plane, personalKey() ?? undefined);
         setHistory((prev) => {
           const next = [...runningRows(queued.requestId, slot.skeletons.length, draft), ...prev];
           void saveHistory(next);
